@@ -95,9 +95,6 @@ namespace SmartRomanCurtain {
             _isApModeActive = false;
         }
         _retryCount = 0;
-
-        ESP_LOGI(TAG, "WiFiConnector::OnGotIp");
-        _otaUpdater->OtaUpdate();
     }
 
     // Designed for wrap handle callback on WI-FI connect
@@ -315,12 +312,6 @@ namespace SmartRomanCurtain {
     bool WiFiConnector::IsOurNetif(const char *prefix, esp_netif_t *netif)
     {
         return strncmp(prefix, esp_netif_get_desc(netif), strlen(prefix) - 1) == 0;
-    }
-
-    // Designed to pass OtaUpdater
-    void WiFiConnector::Set(OtaUpdater* otaUpdater)
-    {
-        _otaUpdater = otaUpdater;
     }
 
 } /* namespace SmartRomanCurtain */

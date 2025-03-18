@@ -32,16 +32,22 @@ namespace SmartRomanCurtain
     " border-radius: 4px; cursor: pointer; font-size: 16px;"
     "}"
     "button:hover { background-color: #45a049; }"
+    "#statusMessage { margin-top: 15px; font-size: 16px; color: #333; }"
+    "progress { width: 100%; height: 25px; border-radius: 12px; overflow: hidden; background-color: #eee; border: 1px solid #ccc; }"
+    "progress::-webkit-progress-bar { background-color: #eee; border-radius: 12px; }"
+    "progress::-webkit-progress-value { background-color: #4CAF50; border-radius: 12px; }"
+    "progress::-moz-progress-bar { background-color: #4CAF50; border-radius: 12px; }"
     "</style>"
 
     "</head>"
     "<body>"
-    "<h1>Конфигурационная панель Римской Шторы</h1>"
+    /*"<h1>Конфигурационная панель Римской Шторы</h1>"*/
 
+    "<h2>Настройка WI-FI</h2>"
     "<form action=\"/submit\" method=\"post\">"
-    " <label for=\"login\">Логин WI-FI:</label>"
+    " <label for=\"login\">Логин:</label>"
     " <input type=\"text\" id=\"login\" name=\"login\" placeholder=\"Enter your login\" required><br>"
-    " <label for=\"password\">Пароль WI-FI:</label>"
+    " <label for=\"password\">Пароль:</label>"
     " <input type=\"password\" id=\"password\" name=\"password\" placeholder=\"Enter your password\" required><br>"
     " <button type=\"submit\">Настроить</button>"
     "</form>"
@@ -51,47 +57,6 @@ namespace SmartRomanCurtain
     " <label for='email'>Значение Email:</label>"
     " <input type='text' id='email' placeholder='Enter your email' required><br>"
     "<button onclick=\"setEmail()\">Отправить</button>"
-    "</div>"
-
-    " <label for=\"mode\">Режим работы:</label>"
-    " <select id=\"mode\" name=\"mode\">"
-    "   <option value=\"normal\">Основной</option>"
-    "   <option value=\"test\">Тестовый</option>"
-    " </select><br>"
-    "<button onclick=\"configureWorkMode()\">Настроить</button>"
-    "</br>"
-
-    "<h2>Настройка калибровочных параметров</h2>"
-    "<div>"
-    " <label for='calibration-up'>Калибровочное значение:</label>"
-    " <input type='text' id='calibration' placeholder='Введите значение'><br>"
-    " <button onclick='calibrate(\"up\", \"read\")'>Прочитать</button>"
-    " <button onclick='calibrate(\"up\", \"write\")'>Записать</button>"
-    " <button onclick='calibrate(\"up\", \"save\")'>Сохранить</button>"
-    "</div>"
-    "</br>"
-
-    "<div>"
-    " <label for='pulses-up'>Количество импульсов:</label>"
-    " <input type='text' id='pulses' placeholder='Введите значение'><br>"
-    " <button onclick='adjustPulses(\"up\", \"read\")'>Прочитать</button>"
-    " <button onclick='adjustPulses(\"up\", \"write\")'>Записать</button>"
-    "</div>"
-    "</br>"
-
-    "<h2>Статистика</h2>"
-    "<div>"
-    " <label for='openCloseCounter'>Количество итераций поднятия/опускания:</label>"
-    " <input type='text' id='openCloseCounter' placeholder='Введите значение'><br>"
-    " <button onclick='configureOcc(\"read\")'>Прочитать</button>"
-    " <button onclick='configureOcc(\"write\")'>Записать</button>"
-    "</div>"
-
-    "<h2>Текущее время</h2>"
-    "<div>"
-    " <label for='currentTime'>Часы и минуты (0-23, 0-59):</label>"
-    " <input type='text' id='currentTime' placeholder='Часы и минуты' readonly><br>"
-    "<button type=\"button\" onclick=\"getCurrentTime()\">Прочитать</button>"
     "</div>"
 
     "<h2>Настройка режима сна</h2>"
@@ -120,6 +85,36 @@ namespace SmartRomanCurtain
     "    </table>"
     "    <button type=\"button\" onclick=\"configureSleepMode()\">Сохранить</button>"
     "</form>"
+    "<div>"
+    " <label for='currentTime'>Текущее время:</label>"
+    " <input type='text' id='currentTime' placeholder='Часы и минуты' readonly><br>"
+    "<button type=\"button\" onclick=\"getCurrentTime()\">Прочитать</button>"
+    "</div>"
+
+    "<h2>Настройка калибровочных параметров</h2>"
+    "<div>"
+    " <label for='calibration-up'>Калибровочное значение:</label>"
+    " <input type='text' id='calibration' placeholder='Введите значение'><br>"
+    " <button onclick='calibrate(\"up\", \"read\")'>Прочитать</button>"
+    " <button onclick='calibrate(\"up\", \"write\")'>Записать</button>"
+    " <button onclick='calibrate(\"up\", \"save\")'>Сохранить</button>"
+    "</div>"
+    "</br>"
+
+    "<div>"
+    " <label for='pulses-up'>Текущее количество импульсов:</label>"
+    " <input type='text' id='pulses' placeholder='Введите значение'><br>"
+    " <button onclick='adjustPulses(\"up\", \"read\")'>Прочитать</button>"
+    " <button onclick='adjustPulses(\"up\", \"write\")'>Записать</button>"
+    "</div>"
+    "</br>"
+
+    "<h2>Обновление системы</h2>"
+    "<div id=\"statusMessage\">Ожидание действий.</div>"
+    "</br>"
+    "<progress id=\"progressBar\" value=\"0\" max=\"100\"></progress>"
+    "</br></br>"
+    "<button id=\"updateButton\">Запустить</button>"
 
     "<script>"
 
@@ -133,15 +128,6 @@ namespace SmartRomanCurtain
     "    .then(response => response.text())"
     "    .then(data => alert(data))"
     "    .catch(error => console.error('Error:', error));"
-    "}"
-
-    "function configureWorkMode() {"
-    " const mode = document.getElementById('mode').value;"
-    " fetch('/configureWorkMode', {"
-    " method: 'POST',"
-    " headers: { 'Content-Type': 'application/x-www-form-urlencoded' },"
-    " body: `mode=${encodeURIComponent(mode)}`"
-    " }).then(response => response.text()).then(data => alert(data));"
     "}"
 
     "function calibrate(direction, action) {"
@@ -182,25 +168,6 @@ namespace SmartRomanCurtain
     "  });"
     "}"
 
-    "function configureOcc(action) {"
-    "  let value = '';"
-    "  if (action === 'write') {"
-    "    value = document.getElementById('openCloseCounter').value;"
-    "  }"
-    "  fetch('/configureOcc', {"
-    "    method: 'POST',"
-    "    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },"
-    "    body: `action=${action}&value=${encodeURIComponent(value)}`"
-    "  })"
-    "  .then(response => response.text())"
-    "  .then(data => {"
-    "    if (action === 'read') {"
-    "      document.getElementById('openCloseCounter').value = data;"
-    "    }"
-    "    alert(data);"
-    "  });"
-    "}"
-
     "function getCurrentTime() {"
     "    fetch('/getCurrentTime', {"
     "        method: 'POST',"
@@ -228,6 +195,40 @@ namespace SmartRomanCurtain
     "    }).then(response => response.text()).then(data => alert(data));"
     "}"
 
+    "document.getElementById('updateButton').addEventListener('click', function() {"
+    "    fetch('/startOTA')"
+    "        .then(response => {"
+    "            if (!response.ok) {"
+    "                throw new Error('Ошибка сети');"
+    "            }"
+    "            return response.text();"
+    "        })"
+    "        .then(data => {"
+    "            document.getElementById('statusMessage').textContent = data;"
+    "            checkOtaProgress();"
+    "        })"
+    "        .catch(error => {"
+    "            console.error('Ошибка:', error);"
+    "            document.getElementById('statusMessage').textContent = 'Ошибка при запросе';"
+    "        });"
+    "});"
+
+    "function checkOtaProgress() {"
+    "    fetch('/otaProgress')"
+    "        .then(response => response.json())"
+    "        .then(data => {"
+    "            document.getElementById('progressBar').value = data.progress;"
+    "            document.getElementById('statusMessage').textContent = data.statusMessage;"
+    ""
+    "            if (data.progress < 100 && data.statusMessage !== 'Прошивка успешно обновлена') {"
+    "                setTimeout(checkOtaProgress, 100);"
+    "            }"
+    "        })"
+    "        .catch(error => {"
+    "            console.error('Ошибка:', error);"
+    "        });"
+    "}"
+
     "</script>"
 
     "</body>"
@@ -249,6 +250,12 @@ namespace SmartRomanCurtain
     void WebServerManager::Set(DeepSleepNtp* deepSleepNtp)
     {
         _deepSleepNtp = deepSleepNtp;
+    }
+
+    // Designed to set instance
+    void WebServerManager::Set(OtaUpdater* otaUpdater)
+    {
+        _otaUpdater = otaUpdater;
     }
 
     // Designed to get login
@@ -276,7 +283,7 @@ namespace SmartRomanCurtain
     }
 
     // Designed to handle HTTP request
-    esp_err_t WebServerManager::SubmitHandler(httpd_req_t *req)
+    esp_err_t WebServerManager::SetWiFiHandler(httpd_req_t *req)
     {
         char buf[100] = {0};
 
@@ -323,43 +330,6 @@ namespace SmartRomanCurtain
         return ESP_OK;
     }
 
-    // Designed to handle HTTP request
-    esp_err_t WebServerManager::ConfigureWorkModeHandler(httpd_req_t *req)
-    {
-        char buf[100] = {0};
-
-         int ret = httpd_req_recv(req, buf, std::min(req->content_len, sizeof(buf) - 1));
-         if (ret <= 0) {
-             ESP_LOGE(TAG.c_str(), "Failed to receive data");
-             return ESP_FAIL;
-         }
-
-         buf[ret] = '\0'; // Ensure the buffer is null-terminated.
-
-         char modeStr[10] = {0};
-
-         if (httpd_query_key_value(buf, "mode", modeStr, sizeof(modeStr)) != ESP_OK) {
-             ESP_LOGE(TAG.c_str(), "Missing or invalid 'action'");
-             httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid or missing 'action' parameter");
-             return ESP_FAIL;
-         }
-
-         ESP_LOGI(TAG.c_str(), "Mode: %s", modeStr);
-
-         int32_t configuredWorkMode = 0;
-         if (strcmp(modeStr, "normal") == 0) {
-             configuredWorkMode = 0;
-         } else if (strcmp(modeStr, "test") == 0) {
-             configuredWorkMode = 1;
-         } else {
-             ESP_LOGE(TAG.c_str(), "Unknown mode");
-             return ESP_FAIL; // Return an error for invalid modes.
-         }
-         _changeWorkModeCallback(configuredWorkMode);
-         _nvsMemoryManager->SaveDataToFlash("wm", configuredWorkMode);
-
-         return ESP_OK;
-    }
 
     // Designed to handle HTTP request
     esp_err_t WebServerManager::CalibrateHandler(httpd_req_t *req)
@@ -477,55 +447,7 @@ namespace SmartRomanCurtain
     }
 
     // Designed to handle HTTP request
-    esp_err_t WebServerManager::ConfigureOccHandler(httpd_req_t *req)
-    {
-        char buf[100] = {0};
-        int ret = httpd_req_recv(req, buf, std::min(req->content_len, sizeof(buf) - 1));
-
-        if (ret <= 0) {
-            ESP_LOGE(TAG.c_str(), "Failed to receive data");
-            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive data");
-            return ESP_FAIL;
-        }
-
-        buf[ret] = '\0';
-        ESP_LOGI(TAG.c_str(), "Received data: %s", buf);
-
-        char action[16] = {0};
-        char value_str[10] = {0};
-        int value = 0;
-
-        if (httpd_query_key_value(buf, "action", action, sizeof(action)) != ESP_OK) {
-            ESP_LOGE(TAG.c_str(), "Missing or invalid 'action'");
-            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid or missing 'action' parameter");
-            return ESP_FAIL;
-        }
-
-        if (httpd_query_key_value(buf, "value", value_str, sizeof(value_str)) == ESP_OK) {
-            value = atoi(value_str);
-        }
-
-        if (strcmp(action, "read") == 0) {
-            char response[16];
-            snprintf(response, sizeof(response), "%d", _motorController->GetOpenCloseCounter());
-            ESP_LOGI(TAG.c_str(), "Read open and close counter: %d", _motorController->GetOpenCloseCounter());
-            httpd_resp_sendstr(req, response);
-        } else if (strcmp(action, "write") == 0) {
-            _motorController->SetOpenCloseCounter(value);
-            _nvsMemoryManager->SaveDataToFlash("occ", _motorController->GetOpenCloseCounter());
-            ESP_LOGI(TAG.c_str(), "Updated open and close counter: %d", _motorController->GetOpenCloseCounter());
-            httpd_resp_sendstr(req, "open and close counter updated successfully.");
-        } else {
-            ESP_LOGE(TAG.c_str(), "Invalid action");
-            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid action");
-            return ESP_FAIL;
-        }
-
-        return ESP_OK;
-    }
-
-    // Designed to handle HTTP request
-    esp_err_t WebServerManager::ConfigureSleepModeHandler(httpd_req_t *req)
+    esp_err_t WebServerManager::SetSleepModeHandler(httpd_req_t *req)
     {
         char content[400] = {0};
         int ret = httpd_req_recv(req, content, sizeof(content) - 1);
@@ -661,79 +583,120 @@ namespace SmartRomanCurtain
 
             httpd_register_uri_handler(server, &root);
 
-            httpd_uri_t submit = {
+            httpd_uri_t setWiFiUri = {
                 .uri = "/submit",
                 .method = HTTP_POST,
-                .handler = StaticSubmitHandler,
+                .handler = StaticSetWiFiHandler,
                 .user_ctx = this
             };
 
-            httpd_register_uri_handler(server, &submit);
+            httpd_register_uri_handler(server, &setWiFiUri);
 
-            httpd_uri_t configureWorkMode = {
-                .uri = "/configureWorkMode",
-                .method = HTTP_POST,
-                .handler = StaticConfigureWorkModeHandler,
-                .user_ctx = this
-            };
-            httpd_register_uri_handler(server, &configureWorkMode);
-
-            httpd_uri_t calibrate = {
+            httpd_uri_t calibrateUri = {
                 .uri = "/calibrate",
                 .method = HTTP_POST,
                 .handler = StaticCalibrateHandler,
                 .user_ctx = this
             };
 
-            httpd_register_uri_handler(server, &calibrate);
+            httpd_register_uri_handler(server, &calibrateUri);
 
-            httpd_uri_t adjustPulses = {
+            httpd_uri_t adjustPulsesUri = {
                 .uri = "/adjustPulses",
                 .method = HTTP_POST,
                 .handler = StaticAdjustPulsesHandler,
                 .user_ctx = this
             };
 
-            httpd_register_uri_handler(server, &adjustPulses);
+            httpd_register_uri_handler(server, &adjustPulsesUri);
 
-            httpd_uri_t configureOcc = {
-                .uri = "/configureOcc",
-                .method = HTTP_POST,
-                .handler = StaticConfigureOccHandler,
-                .user_ctx = this
-            };
-
-            httpd_register_uri_handler(server, &configureOcc);
-
-            httpd_uri_t configureSleepMode = {
+            httpd_uri_t configureSleepModeUri = {
                 .uri = "/configureSleepMode",
                 .method = HTTP_POST,
-                .handler = StaticConfigureSleepModeHandler,
+                .handler = StaticSetSleepModeHandler,
                 .user_ctx = this
             };
 
-            httpd_register_uri_handler(server, &configureSleepMode);
+            httpd_register_uri_handler(server, &configureSleepModeUri);
 
-            httpd_uri_t getCurrentTime = {
+            httpd_uri_t getCurrentTimeUri = {
                 .uri = "/getCurrentTime",
                 .method = HTTP_POST,
                 .handler = StaticGetCurrentTimeHandler,
                 .user_ctx = this
             };
 
-            httpd_register_uri_handler(server, &getCurrentTime);
+            httpd_register_uri_handler(server, &getCurrentTimeUri);
 
-            httpd_uri_t setEmail = {
+            httpd_uri_t setEmailUri = {
                 .uri = "/setEmail",
                 .method = HTTP_POST,
                 .handler = StaticSetEmailHandler,
                 .user_ctx = this
             };
 
-            httpd_register_uri_handler(server, &setEmail);
+            httpd_register_uri_handler(server, &setEmailUri);
+
+            httpd_uri_t startOtaUri = {
+                .uri = "/startOTA",
+                .method = HTTP_GET,
+                .handler = StaticStartOtaHandler,
+                .user_ctx = this
+            };
+            httpd_register_uri_handler(server, &startOtaUri);
+
+            httpd_uri_t getOtaProgressUri = {
+                .uri = "/otaProgress",
+                .method = HTTP_GET,
+                .handler = StaticGetOtaProgressHandler,
+                .user_ctx = this
+            };
+            httpd_register_uri_handler(server, &getOtaProgressUri);
         }
 
         return server;
+    }
+
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticGetOtaProgressHandler(httpd_req_t* req)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->GetOtaProgressHandler(req);
+        }
+        return ESP_FAIL;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::GetOtaProgressHandler(httpd_req_t *req)
+    {
+        cJSON *root = cJSON_CreateObject();
+       cJSON_AddNumberToObject(root, "progress", _otaUpdater->GetOtaProgress());
+       cJSON_AddStringToObject(root, "statusMessage", _otaUpdater->GetOtaStatusMessage().c_str());
+       const char *response = cJSON_Print(root);
+       httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+       cJSON_Delete(root);
+
+       return ESP_OK;
+    }
+
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticStartOtaHandler(httpd_req_t* req)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->StartOtaHandler(req);
+        }
+        return ESP_FAIL;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::StartOtaHandler(httpd_req_t *req)
+    {
+        httpd_resp_send(req, "OTA начата. Подготовка к загрузке...", HTTPD_RESP_USE_STRLEN);
+        _otaUpdater->OtaUpdate();
+
+        return ESP_OK;
     }
 
     // Designed to handle HTTP request with wrap in static method
@@ -741,7 +704,7 @@ namespace SmartRomanCurtain
     {
         WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
         if (self) {
-            self->SetEmailHandler(req);
+            return self->SetEmailHandler(req);
         }
         return ESP_FAIL;
     }
@@ -751,27 +714,17 @@ namespace SmartRomanCurtain
     {
         WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
         if (self) {
-            self->RootHandler(req);
+            return self->RootHandler(req);
         }
         return ESP_FAIL;
     }
 
     // Designed to handle HTTP request with wrap in static method
-    esp_err_t WebServerManager::StaticSubmitHandler(httpd_req_t *req)
+    esp_err_t WebServerManager::StaticSetWiFiHandler(httpd_req_t *req)
     {
         WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
         if (self) {
-            return self->SubmitHandler(req);
-        }
-        return ESP_FAIL;
-    }
-
-    // Designed to handle HTTP request with wrap in static method
-    esp_err_t WebServerManager::StaticConfigureWorkModeHandler(httpd_req_t *req)
-    {
-        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
-        if (self) {
-            return self->ConfigureWorkModeHandler(req);
+            return self->SetWiFiHandler(req);
         }
         return ESP_FAIL;
     }
@@ -797,21 +750,11 @@ namespace SmartRomanCurtain
     }
 
     // Designed to handle HTTP request with wrap in static method
-    esp_err_t WebServerManager::StaticConfigureOccHandler(httpd_req_t *req)
+    esp_err_t WebServerManager::StaticSetSleepModeHandler(httpd_req_t *req)
     {
         WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
         if (self) {
-            return self->ConfigureOccHandler(req);
-        }
-        return ESP_FAIL;
-    }
-
-    // Designed to handle HTTP request with wrap in static method
-    esp_err_t WebServerManager::StaticConfigureSleepModeHandler(httpd_req_t *req)
-    {
-        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
-        if (self) {
-            return self->ConfigureSleepModeHandler(req);
+            return self->SetSleepModeHandler(req);
         }
         return ESP_FAIL;
     }
@@ -820,7 +763,7 @@ namespace SmartRomanCurtain
     {
         WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
         if (self) {
-            self->GetCurrentTimeHandler(req);
+            return self->GetCurrentTimeHandler(req);
         }
         return ESP_FAIL;
     }
@@ -836,4 +779,175 @@ namespace SmartRomanCurtain
     {
         _deviceId = deviceId;
     }
+/*
+    // Html
+    " <label for=\"mode\">Режим работы:</label>"
+    " <select id=\"mode\" name=\"mode\">"
+    "   <option value=\"normal\">Основной</option>"
+    "   <option value=\"test\">Тестовый</option>"
+    " </select><br>"
+    "<button onclick=\"configureWorkMode()\">Настроить</button>"
+    "</br>"
+
+    "<h2>Статистика</h2>"
+    "<div>"
+    " <label for='openCloseCounter'>Количество итераций поднятия/опускания:</label>"
+    " <input type='text' id='openCloseCounter' placeholder='Введите значение'><br>"
+    " <button onclick='configureOcc(\"read\")'>Прочитать</button>"
+    " <button onclick='configureOcc(\"write\")'>Записать</button>"
+    "</div>"
+
+    // Scripts
+    "function configureOcc(action) {"
+    "  let value = '';"
+    "  if (action === 'write') {"
+    "    value = document.getElementById('openCloseCounter').value;"
+    "  }"
+    "  fetch('/configureOcc', {"
+    "    method: 'POST',"
+    "    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },"
+    "    body: `action=${action}&value=${encodeURIComponent(value)}`"
+    "  })"
+    "  .then(response => response.text())"
+    "  .then(data => {"
+    "    if (action === 'read') {"
+    "      document.getElementById('openCloseCounter').value = data;"
+    "    }"
+    "    alert(data);"
+    "  });"
+    "}"
+
+    "function configureWorkMode() {"
+    " const mode = document.getElementById('mode').value;"
+    " fetch('/configureWorkMode', {"
+    " method: 'POST',"
+    " headers: { 'Content-Type': 'application/x-www-form-urlencoded' },"
+    " body: `mode=${encodeURIComponent(mode)}`"
+    " }).then(response => response.text()).then(data => alert(data));"
+    "}"
+
+    httpd_uri_t configureOcc = {
+        .uri = "/configureOcc",
+        .method = HTTP_POST,
+        .handler = StaticConfigureOccHandler,
+        .user_ctx = this
+    };
+
+    // Registration
+    httpd_register_uri_handler(server, &configureOcc);
+    httpd_uri_t configureWorkMode = {
+        .uri = "/configureWorkMode",
+        .method = HTTP_POST,
+        .handler = StaticConfigureWorkModeHandler,
+        .user_ctx = this
+    };
+    httpd_register_uri_handler(server, &configureWorkMode);
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::ConfigureOccHandler(httpd_req_t *req)
+    {
+        char buf[100] = {0};
+        int ret = httpd_req_recv(req, buf, std::min(req->content_len, sizeof(buf) - 1));
+
+        if (ret <= 0) {
+            ESP_LOGE(TAG.c_str(), "Failed to receive data");
+            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive data");
+            return ESP_FAIL;
+        }
+
+        buf[ret] = '\0';
+        ESP_LOGI(TAG.c_str(), "Received data: %s", buf);
+
+        char action[16] = {0};
+        char value_str[10] = {0};
+        int value = 0;
+
+        if (httpd_query_key_value(buf, "action", action, sizeof(action)) != ESP_OK) {
+            ESP_LOGE(TAG.c_str(), "Missing or invalid 'action'");
+            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid or missing 'action' parameter");
+            return ESP_FAIL;
+        }
+
+        if (httpd_query_key_value(buf, "value", value_str, sizeof(value_str)) == ESP_OK) {
+            value = atoi(value_str);
+        }
+
+        if (strcmp(action, "read") == 0) {
+            char response[16];
+            snprintf(response, sizeof(response), "%d", _motorController->GetOpenCloseCounter());
+            ESP_LOGI(TAG.c_str(), "Read open and close counter: %d", _motorController->GetOpenCloseCounter());
+            httpd_resp_sendstr(req, response);
+        } else if (strcmp(action, "write") == 0) {
+            _motorController->SetOpenCloseCounter(value);
+            _nvsMemoryManager->SaveDataToFlash("occ", _motorController->GetOpenCloseCounter());
+            ESP_LOGI(TAG.c_str(), "Updated open and close counter: %d", _motorController->GetOpenCloseCounter());
+            httpd_resp_sendstr(req, "open and close counter updated successfully.");
+        } else {
+            ESP_LOGE(TAG.c_str(), "Invalid action");
+            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid action");
+            return ESP_FAIL;
+        }
+
+        return ESP_OK;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::ConfigureWorkModeHandler(httpd_req_t *req)
+    {
+        char buf[100] = {0};
+
+         int ret = httpd_req_recv(req, buf, std::min(req->content_len, sizeof(buf) - 1));
+         if (ret <= 0) {
+             ESP_LOGE(TAG.c_str(), "Failed to receive data");
+             return ESP_FAIL;
+         }
+
+         buf[ret] = '\0'; // Ensure the buffer is null-terminated.
+
+         char modeStr[10] = {0};
+
+         if (httpd_query_key_value(buf, "mode", modeStr, sizeof(modeStr)) != ESP_OK) {
+             ESP_LOGE(TAG.c_str(), "Missing or invalid 'action'");
+             httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid or missing 'action' parameter");
+             return ESP_FAIL;
+         }
+
+         ESP_LOGI(TAG.c_str(), "Mode: %s", modeStr);
+
+         int32_t configuredWorkMode = 0;
+         if (strcmp(modeStr, "normal") == 0) {
+             configuredWorkMode = 0;
+         } else if (strcmp(modeStr, "test") == 0) {
+             configuredWorkMode = 1;
+         } else {
+             ESP_LOGE(TAG.c_str(), "Unknown mode");
+             return ESP_FAIL; // Return an error for invalid modes.
+         }
+         _changeWorkModeCallback(configuredWorkMode);
+         _nvsMemoryManager->SaveDataToFlash("wm", configuredWorkMode);
+
+         return ESP_OK;
+    }
+
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticConfigureWorkModeHandler(httpd_req_t *req)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->ConfigureWorkModeHandler(req);
+        }
+        return ESP_FAIL;
+    }
+
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticConfigureOccHandler(httpd_req_t *req)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->ConfigureOccHandler(req);
+        }
+        return ESP_FAIL;
+    }
+*/
+
 }

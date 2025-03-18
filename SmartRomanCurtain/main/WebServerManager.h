@@ -16,6 +16,7 @@
 #include "DeepSleepNtp.h"
 #include "NvsMemoryManager.h"
 #include "MotorController.h"
+#include "OtaUpdater.h"
 
 #include "cJSON.h"
 
@@ -34,11 +35,14 @@ namespace SmartRomanCurtain
             // Designed to set instance
             void Set(MotorController* motorController);
 
-            // Designed to set callback
-            void Set(const std::function<void(const int32_t)>& changeWorkModeCallback);
-
             // Designed to set instance
             void Set(DeepSleepNtp* motorController);
+
+            // Designed to set instance
+            void Set(OtaUpdater* otaUpdater);
+
+            // Designed to set callback
+            void Set(const std::function<void(const int32_t)>& changeWorkModeCallback);
 
             // Designed to run HTTP server
             httpd_handle_t StartWebServer(void);
@@ -66,6 +70,7 @@ namespace SmartRomanCurtain
             NvsMemoryManager* _nvsMemoryManager;
             MotorController* _motorController;
             DeepSleepNtp* _deepSleepNtp;
+            OtaUpdater* _otaUpdater;
 
             std::string _deviceId;
 
@@ -75,10 +80,7 @@ namespace SmartRomanCurtain
             esp_err_t RootHandler(httpd_req_t* req);
 
             // Designed to handle HTTP request
-            esp_err_t SubmitHandler(httpd_req_t *req);
-
-            // Designed to handle HTTP request
-            esp_err_t ConfigureWorkModeHandler(httpd_req_t *req);
+            esp_err_t SetWiFiHandler(httpd_req_t *req);
 
             // Designed to handle HTTP request
             esp_err_t CalibrateHandler(httpd_req_t *req);
@@ -87,10 +89,7 @@ namespace SmartRomanCurtain
             esp_err_t AdjustPulsesHandler(httpd_req_t *req);
 
             // Designed to handle HTTP request
-            esp_err_t ConfigureOccHandler(httpd_req_t *req);
-
-            // Designed to handle HTTP request
-            esp_err_t ConfigureSleepModeHandler(httpd_req_t *req);
+            esp_err_t SetSleepModeHandler(httpd_req_t *req);
 
             // Designed to handle HTTP request
             esp_err_t GetCurrentTimeHandler(httpd_req_t *req);
@@ -98,14 +97,17 @@ namespace SmartRomanCurtain
             // Designed to handle HTTP request
             esp_err_t SetEmailHandler(httpd_req_t *req);
 
+            // Designed to handle HTTP request
+            esp_err_t StartOtaHandler(httpd_req_t *req);
+
+            // Designed to handle HTTP request
+            esp_err_t GetOtaProgressHandler(httpd_req_t *req);
+
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticRootHandler(httpd_req_t* req);
 
             // Designed to handle HTTP request with wrap in static method
-            static esp_err_t StaticSubmitHandler(httpd_req_t *req);
-
-            // Designed to handle HTTP request with wrap in static method
-            static esp_err_t StaticConfigureWorkModeHandler(httpd_req_t *req);
+            static esp_err_t StaticSetWiFiHandler(httpd_req_t *req);
 
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticCalibrateHandler(httpd_req_t *req);
@@ -114,16 +116,19 @@ namespace SmartRomanCurtain
             static esp_err_t StaticAdjustPulsesHandler(httpd_req_t *req);
 
             // Designed to handle HTTP request with wrap in static method
-            static esp_err_t StaticConfigureOccHandler(httpd_req_t *req);
-
-            // Designed to handle HTTP request with wrap in static method
-            static esp_err_t StaticConfigureSleepModeHandler(httpd_req_t *req);
+            static esp_err_t StaticSetSleepModeHandler(httpd_req_t *req);
 
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticGetCurrentTimeHandler(httpd_req_t* req);
 
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticSetEmailHandler(httpd_req_t* req);
+
+            // Designed to handle HTTP request with wrap in static method
+            static esp_err_t StaticStartOtaHandler(httpd_req_t* req);
+
+            // Designed to handle HTTP request with wrap in static method
+            static esp_err_t StaticGetOtaProgressHandler(httpd_req_t* req);
 
     };
 };

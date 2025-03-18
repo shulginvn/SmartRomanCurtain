@@ -22,8 +22,6 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-#include "OtaUpdater.h"
-
 namespace SmartRomanCurtain {
 
     class WiFiConnector {
@@ -33,9 +31,6 @@ namespace SmartRomanCurtain {
 
             // Designed for initiate WI-FI disconnect
             void Disconnect();
-
-            // Designed to pass OtaUpdater
-            void Set(OtaUpdater* otaUpdater);
 
         private:
 
@@ -56,7 +51,6 @@ namespace SmartRomanCurtain {
             esp_ip4_addr_t _ipAddr = {};
             esp_ip6_addr_t _ipv6Addr = {};
             esp_netif_t* _espNetif = nullptr;
-            OtaUpdater* _otaUpdater = nullptr;
 
             // Designed for WI-FI start
             void Start();

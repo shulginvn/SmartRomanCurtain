@@ -10,7 +10,7 @@
 
 namespace SmartRomanCurtain
 {
-    TuyaController _tuyaController;
+    //TuyaController _tuyaController;
     WebServerManager _webServerManager;
     NvsMemoryManager _nvsMemoryManager;
     MotorController _motorController;
@@ -34,10 +34,11 @@ namespace SmartRomanCurtain
         _webServerManager.Set(&_motorController);
         _webServerManager.Set(&_nvsMemoryManager);
         _webServerManager.Set(&_deepSleepNtp);
+        _webServerManager.Set(&_otaUpdater);
+        _webServerManager.Set([&](const int32_t workMode) { _motorController.HandleWorkModeChanged(workMode); });
+
         _motorController.Set(&_nvsMemoryManager);
         _deepSleepNtp.Set(&_nvsMemoryManager);
-        _wiFiConnector.Set(&_otaUpdater);
-        _webServerManager.Set([&](const int32_t workMode) { _motorController.HandleWorkModeChanged(workMode); });
         _yandexDialogController.Set([&](const std::string& motorState) { _motorController.HandleMotorStateChanged(motorState); });
         _yandexDialogController.Set([&](const std::uint32_t range) { _motorController.HandleMotorRangeChanged(range); });
         _webServerManager.SetDeviceId(_yandexDialogController.GetDeviceId());
