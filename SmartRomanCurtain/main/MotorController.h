@@ -34,9 +34,6 @@ namespace SmartRomanCurtain
             // Designed to set instance
             void Set(NvsMemoryManager* nvsMemoryManager);
 
-            // Designed to handle change worked mode event
-            void HandleWorkModeChanged(const int32_t workMode);
-
             // Designed to handle change motor state  event
             void HandleMotorStateChanged(const std::string& motorState);
 
@@ -48,12 +45,6 @@ namespace SmartRomanCurtain
 
             // Designed to get calibration value
             int32_t GetBaseCalibration();
-
-            // Designed to set open close counter
-            void SetOpenCloseCounter(const int32_t openCloseCounter);
-
-            // Designed to read open close counter
-            int32_t GetOpenCloseCounter();
 
             // Designed to set position in pulses
             void SetPositionInPulses(const int32_t pulses);
@@ -119,25 +110,25 @@ namespace SmartRomanCurtain
             std::unique_ptr<float> _ratio;
 
             // Designed to wrap IRQ handler HallSensorIsrHandler
-            static void IRAM_ATTR StaticHallSensorIsrHandler(void *arg);
+            static void IRAM_ATTR StaticHandleHallSensorIsr(void *arg);
 
             // Designed to handle IRQ from GPIO
-            void HallSensorIsrHandler(void *arg);
+            void HandleHallSensorIsr(void *arg);
+
+            // Designed to wrap task DoEncoderTask
+            static void StaticDoEncoderTask(void *arg);
 
             // Designed to wrap task DoHallSensorTask
             static void StaticDoHallSensorTask(void *arg);
 
-            // Designed to wrap task DoEncoderTask
-            static void StaticDoEncoderTask(void *arg);
+            // Designed to wrap task DoMotorManageTask
+            static void StaticDoMotorManageTask(void *arg);
 
             // Designed to handle working states of the motor
             void DoEncoderTask();
 
             // Designed to handle pulse event
             void DoHallSensorTask();
-
-            // Designed to wrap task DoMotorManageTask
-            static void StaticDoMotorManageTask(void *arg);
 
             // Designed to handle command
             void DoMotorManageTask();
@@ -153,9 +144,6 @@ namespace SmartRomanCurtain
 
             // Designed to wait pause after open and close
             bool WaitPause(uint32_t msTarget);
-
-            // Designed to save close counter
-            void SaveOpenCloseCounter();
 
             // Designed for send command to motor
             void SendMotorCommand(const EnMotorCommand& motorCommand);

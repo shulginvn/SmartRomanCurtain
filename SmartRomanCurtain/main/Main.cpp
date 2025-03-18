@@ -35,7 +35,6 @@ namespace SmartRomanCurtain
         _webServerManager.Set(&_nvsMemoryManager);
         _webServerManager.Set(&_deepSleepNtp);
         _webServerManager.Set(&_otaUpdater);
-        _webServerManager.Set([&](const int32_t workMode) { _motorController.HandleWorkModeChanged(workMode); });
 
         _motorController.Set(&_nvsMemoryManager);
         _deepSleepNtp.Set(&_nvsMemoryManager);

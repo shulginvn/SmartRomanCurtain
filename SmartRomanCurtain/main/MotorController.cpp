@@ -38,7 +38,7 @@ namespace SmartRomanCurtain
         _gpioEvtQueue = xQueueCreate(10, sizeof(int));
 
         gpio_install_isr_service(0);
-        gpio_isr_handler_add(HALL_SENSOR_PIN, StaticHallSensorIsrHandler, this);
+        gpio_isr_handler_add(HALL_SENSOR_PIN, StaticHandleHallSensorIsr, this);
 
         xTaskCreate(StaticDoHallSensorTask, "HallSensorTask", 2 * 1024, this, configMAX_PRIORITIES-1, NULL);
         xTaskCreate(StaticDoEncoderTask, "EncoderTask", 2 * 1048, this, 2, NULL);
@@ -65,17 +65,17 @@ namespace SmartRomanCurtain
     }
 
     // Designed to handle IRQ from GPIO
-    void MotorController::HallSensorIsrHandler(void *arg)
+    void MotorController::HandleHallSensorIsr(void *arg)
     {
         xQueueSendFromISR(_gpioEvtQueue, &HALL_SENSOR_PIN, NULL);
     }
 
     // Designed to wrap IRQ handler HallSensorIsrHandler
-    void IRAM_ATTR MotorController::StaticHallSensorIsrHandler(void *arg)
+    void IRAM_ATTR MotorController::StaticHandleHallSensorIsr(void *arg)
     {
         MotorController* self = static_cast<MotorController*>(arg);
         if (self) {
-            self->HallSensorIsrHandler(arg);
+            self->HandleHallSensorIsr(arg);
         }
     }
 
@@ -195,7 +195,7 @@ namespace SmartRomanCurtain
                             if (WaitPause(PAUSE_AFTER_CLOSE)) {
                                 SendMotorCommand(EnMotorCommand::OPEN);
                                 _openCloseCounter++;
-                                SaveOpenCloseCounter();
+                                _nvsMemoryManager->SaveDataToFlash("occ", _openCloseCounter);
                             }
                         }
                     }
@@ -304,24 +304,6 @@ namespace SmartRomanCurtain
         _nvsMemoryManager = nvsMemoryManager;
     }
 
-    // Designed to save close counter
-    void MotorController::SaveOpenCloseCounter()
-    {
-        _nvsMemoryManager->SaveDataToFlash("occ", _openCloseCounter);
-    }
-
-    // Designed to read open close counter
-    void MotorController::SetOpenCloseCounter(const int32_t openCloseCounter)
-    {
-        _openCloseCounter = openCloseCounter;
-    }
-
-    // Designed to read open close counter
-    int32_t MotorController::GetOpenCloseCounter()
-    {
-        return _openCloseCounter;
-    }
-
     // Designed to set calibration value
     void MotorController::SetBaseCalibration(const int32_t baseCalibration)
     {
@@ -346,15 +328,6 @@ namespace SmartRomanCurtain
     int32_t MotorController::GetPositionInPulses()
     {
         return _baseCalibration * _motorPosition;
-    }
-
-    // Designed to handle change worked mode event
-    void MotorController::HandleWorkModeChanged(const int32_t workMode)
-    {
-        portENTER_CRITICAL(&_motorMutex);
-        SendMotorCommand(EnMotorCommand::STOP);
-        _workMode = static_cast<EnWorkMode>(workMode);
-        portEXIT_CRITICAL(&_motorMutex);
     }
 
     // Designed to handle change motor state  event

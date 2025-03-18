@@ -41,9 +41,6 @@ namespace SmartRomanCurtain
             // Designed to set instance
             void Set(OtaUpdater* otaUpdater);
 
-            // Designed to set callback
-            void Set(const std::function<void(const int32_t)>& changeWorkModeCallback);
-
             // Designed to run HTTP server
             httpd_handle_t StartWebServer(void);
 
