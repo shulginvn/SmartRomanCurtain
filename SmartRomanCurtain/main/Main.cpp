@@ -10,6 +10,8 @@
 
 namespace SmartRomanCurtain
 {
+    std::string CURRENT_FIRMWARE_VERSION = "1.00";
+
     //TuyaController _tuyaController;
     WebServerManager _webServerManager;
     NvsMemoryManager _nvsMemoryManager;
@@ -41,6 +43,7 @@ namespace SmartRomanCurtain
         _yandexDialogController.Set([&](const std::string& motorState) { _motorController.HandleMotorStateChanged(motorState); });
         _yandexDialogController.Set([&](const std::uint32_t range) { _motorController.HandleMotorRangeChanged(range); });
         _webServerManager.SetDeviceId(_yandexDialogController.GetDeviceId());
+        _webServerManager.SetCurrentFirmwareVersion(CURRENT_FIRMWARE_VERSION);
         //_tuyaController.Set([=](const std::string& motorState) { _motorController.HandleMotorStateChanged(motorState); });
 
         esp_netif_init();

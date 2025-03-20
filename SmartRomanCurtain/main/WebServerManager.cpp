@@ -33,7 +33,7 @@ namespace SmartRomanCurtain
     "}"
     "button:hover { background-color: #45a049; }"
     "#statusMessage { margin-top: 15px; font-size: 16px; color: #333; }"
-    "progress { width: 100%; height: 25px; border-radius: 12px; overflow: hidden; background-color: #eee; border: 1px solid #ccc; }"
+    "progress { width: 100%; height: 25px; border-radius: 12px; overflow: hidden; background-color: #eee; border: 1px solid #ccc; margin: 5px 0 }"
     "progress::-webkit-progress-bar { background-color: #eee; border-radius: 12px; }"
     "progress::-webkit-progress-value { background-color: #4CAF50; border-radius: 12px; }"
     "progress::-moz-progress-bar { background-color: #4CAF50; border-radius: 12px; }"
@@ -100,7 +100,6 @@ namespace SmartRomanCurtain
     " <button onclick='calibrate(\"up\", \"save\")'>Сохранить</button>"
     "</div>"
     "</br>"
-
     "<div>"
     " <label for='pulses-up'>Текущее количество импульсов:</label>"
     " <input type='text' id='pulses' placeholder='Введите значение'><br>"
@@ -110,11 +109,14 @@ namespace SmartRomanCurtain
     "</br>"
 
     "<h2>Обновление системы</h2>"
-    "<div id=\"statusMessage\">Ожидание действий.</div>"
-    "</br>"
+    "<div>"
+    "<label id=\"statusMessage\">Ожидание действий.</label>"
     "<progress id=\"progressBar\" value=\"0\" max=\"100\"></progress>"
-    "</br></br>"
-    "<button id=\"updateButton\">Запустить</button>"
+    "<button id=\"checkFirmwareButton\" style=\"margin-right: 5px;\">Проверить</button>"
+    "<button id=\"updateFirmwareButton\">Запустить</button>"
+    "</div>"
+
+    // Scripts
 
     "<script>"
 
@@ -195,7 +197,7 @@ namespace SmartRomanCurtain
     "    }).then(response => response.text()).then(data => alert(data));"
     "}"
 
-    "document.getElementById('updateButton').addEventListener('click', function() {"
+    "document.getElementById('updateFirmwareButton').addEventListener('click', function() {"
     "    fetch('/startOTA')"
     "        .then(response => {"
     "            if (!response.ok) {"
@@ -219,7 +221,6 @@ namespace SmartRomanCurtain
     "        .then(data => {"
     "            document.getElementById('progressBar').value = data.progress;"
     "            document.getElementById('statusMessage').textContent = data.statusMessage;"
-    ""
     "            if (data.progress < 100 && data.statusMessage !== 'Прошивка успешно обновлена') {"
     "                setTimeout(checkOtaProgress, 100);"
     "            }"
@@ -228,6 +229,17 @@ namespace SmartRomanCurtain
     "            console.error('Ошибка:', error);"
     "        });"
     "}"
+
+    "document.getElementById('checkFirmwareButton').addEventListener('click', function() {"
+    "    fetch('/checkFirmware')"
+    "        .then(response => response.json())"
+    "        .then(data => {"
+    "            document.getElementById('statusMessage').textContent = data.statusMessage;"
+    "        })"
+    "        .catch(error => {"
+    "            console.error('Ошибка:', error);"
+    "        });"
+    "});"
 
     "</script>"
 
@@ -651,9 +663,130 @@ namespace SmartRomanCurtain
                 .user_ctx = this
             };
             httpd_register_uri_handler(server, &getOtaProgressUri);
+
+            httpd_uri_t checkFirmwareUri = {
+                .uri = "/checkFirmware",
+                .method = HTTP_GET,
+                .handler = StaticCheckFirmwareHandler,
+                .user_ctx = this
+            };
+            httpd_register_uri_handler(server, &checkFirmwareUri);
         }
 
         return server;
+    }
+
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticCheckFirmwareHandler(httpd_req_t* req)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->CheckFirmwareHandler(req);
+        }
+        return ESP_FAIL;
+    }
+
+    // Designed for send HTTP response with message
+    esp_err_t WebServerManager::SendHttpResponseWithMessage(httpd_req_t* req, const std::string& message)
+    {
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddStringToObject(root, "statusMessage", message.c_str());
+
+        const char *response = cJSON_Print(root);
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+
+        cJSON_Delete(root);
+
+        return ESP_OK;
+    }
+
+    // Designed to handle HTTP event callback
+    esp_err_t WebServerManager::ProcessJsonFirmwareVersion(esp_http_client_event_t *evt)
+    {
+        switch ((int)evt->event_id) {
+            case HTTP_EVENT_ON_DATA: {
+                WebServerManager* self = static_cast<WebServerManager*>(evt->user_data);
+                if (self) {
+                    return self->SetJsonFirmwareVersion((char *)evt->data, evt->data_len);
+                }
+            }    break;
+            default:
+                break;
+        }
+        return ESP_OK;
+    }
+
+    // Designed to set JSON firmware version
+    esp_err_t WebServerManager::SetJsonFirmwareVersion(const char* data, const uint32_t length)
+    {
+        _jsonFirmwareVersion = std::string(data, length);
+        return ESP_OK;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::CheckFirmwareHandler(httpd_req_t *req)
+    {
+        std::string statusMessage = {};
+
+        esp_http_client_config_t config = {};
+        config.url = SERVER_URL;
+        config.method = HTTP_METHOD_POST;
+        config.cert_pem = (const char *)YANDEX_ROOT_CA.c_str();
+        config.event_handler = ProcessJsonFirmwareVersion;
+        config.user_data = this;
+
+        esp_http_client_handle_t client = esp_http_client_init(&config);
+
+        // Setup headers
+        esp_http_client_set_header(client, "Content-Type", "application/json");
+
+        // Body of header
+        const char *postData = "{\"firmwareVersion\": 1}";
+        esp_http_client_set_post_field(client, postData, strlen(postData));
+
+        // Execute the request
+        esp_err_t err = esp_http_client_perform(client);
+        if (err != ESP_OK) {
+            esp_http_client_cleanup(client);
+            statusMessage = "Ошибка при запросе.";
+            return SendHttpResponseWithMessage(req, statusMessage);
+        }
+
+        // Receiver status response
+        int32_t statusCode = esp_http_client_get_status_code(client);
+        if (statusCode != 200) {
+            esp_http_client_cleanup(client);
+            statusMessage = "Ошибка сервера: " + std::to_string(statusCode) + ".";
+            return SendHttpResponseWithMessage(req, statusMessage);
+        }
+
+        // Parse JSON-response
+        cJSON *root = cJSON_Parse(_jsonFirmwareVersion.c_str());
+        if (root == NULL) {
+            esp_http_client_cleanup(client);
+            statusMessage = "Ошибка парсинга JSON.";
+            return SendHttpResponseWithMessage(req, statusMessage);
+        }
+
+        // Extract firmware version or error
+        cJSON *serverFirmwareVersionJson = cJSON_GetObjectItem(root, "version");
+        cJSON *error = cJSON_GetObjectItem(root, "error");
+
+        ESP_LOGI("TAG", "Curr=%s, New=%s", _currentFirmwareVersion.c_str(), std::string(serverFirmwareVersionJson->valuestring).c_str());
+
+        if (serverFirmwareVersionJson) {
+            statusMessage = CompareFirmwareVersions(_currentFirmwareVersion, std::string(serverFirmwareVersionJson->valuestring));
+        } else if (error) {
+            statusMessage = "Ошибка: " + std::string(serverFirmwareVersionJson->valuestring) + ".";
+        } else {
+            statusMessage = "Неизвестный ответ сервера.";
+        }
+
+        cJSON_Delete(root);
+        esp_http_client_cleanup(client);
+
+        return SendHttpResponseWithMessage(req, statusMessage);
     }
 
     // Designed to handle HTTP request with wrap in static method
@@ -772,4 +905,37 @@ namespace SmartRomanCurtain
     {
         _deviceId = deviceId;
     }
+
+    // Designed for set current firmware version
+    void WebServerManager::SetCurrentFirmwareVersion(const std::string& currentFirmvareVersion)
+    {
+        _currentFirmwareVersion = currentFirmvareVersion;
+    }
+
+    // Designed for the compare firmware versions
+    std::string WebServerManager::CompareFirmwareVersions(const std::string& currentVersion, const std::string& serverVersion)
+    {
+        // Divide versions into major and minor
+        size_t currentDot = currentVersion.find('.');
+        size_t serverDot = serverVersion.find('.');
+
+        if (currentDot == std::string::npos || serverDot == std::string::npos) {
+            return "Ошибка: неверный формат версии.";
+        }
+
+        // Convert major and minor to numbers
+        int currentMajor = std::stoi(currentVersion.substr(0, currentDot));
+        int currentMinor = std::stoi(currentVersion.substr(currentDot + 1));
+
+        int serverMajor = std::stoi(serverVersion.substr(0, serverDot));
+        int serverMinor = std::stoi(serverVersion.substr(serverDot + 1));
+
+        // Compare versions
+        if (serverMajor > currentMajor || (serverMajor == currentMajor && serverMinor > currentMinor)) {
+            return "Доступно обновление. Текущая версия: " + currentVersion + ", версия на сервере: " + serverVersion + ".";
+        } else {
+            return "Ваша система обновлена. Текущая версия: " + currentVersion + ".";
+        }
+    }
+
 }

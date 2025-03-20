@@ -89,25 +89,34 @@ namespace SmartRomanCurtain {
                     _otaProgress = (esp_http_client_get_content_length(evt->client) > 0) ?
                                                (100 * _totalBytesReceived) / esp_http_client_get_content_length(evt->client) :
                                                0;
+                    if (_otaProgress == 100) {
+                        _otaStatus = static_cast<uint32_t>(EnOtaStatus::OTA_STATUS_SUCCESS);
+                    }
                 }
                 ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
             }
                 break;
             case HTTP_EVENT_ON_FINISH:
+
+                ESP_LOGI(TAG, "HTTP_EVENT_ON_FINISH %d, %d", _otaProgress.load(), _isFileFound);
+
                 if (_isFileFound && _otaProgress == 100) {
-                    _otaStatus = static_cast<uint32_t>(EnOtaStatus::OTA_STATUS_SUCCESS);
+                    //_otaStatus = static_cast<uint32_t>(EnOtaStatus::OTA_STATUS_SUCCESS);
                 } else if (!_isFileFound) {
                     _otaStatus = static_cast<uint32_t>(EnOtaStatus::OTA_STATUS_FILE_NOT_FOUND);
                 } else {
                     _otaStatus  = static_cast<uint32_t>(EnOtaStatus::OTA_STATUS_CONNECTION_FAILED);
                 }
+
                 ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
                 break;
             case HTTP_EVENT_DISCONNECTED:
                 // Disconnect state handle
 
+                ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED %d, %d", _otaProgress.load(), _isFileFound);
+
                 if (_isFileFound && _otaProgress == 100) {
-                    _otaStatus = static_cast<uint32_t>(EnOtaStatus::OTA_STATUS_SUCCESS);
+                    //_otaStatus = static_cast<uint32_t>(EnOtaStatus::OTA_STATUS_SUCCESS);
                 } else if (!_isFileFound) {
                     _otaStatus = static_cast<uint32_t>(EnOtaStatus::OTA_STATUS_FILE_NOT_FOUND);
                 } else {

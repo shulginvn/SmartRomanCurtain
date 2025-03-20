@@ -53,6 +53,9 @@ namespace SmartRomanCurtain
             // Designed to save device id
             void SetDeviceId(std::string deviceId);
 
+            // Designed for set current firmware version
+            void SetCurrentFirmwareVersion(const std::string& currentFirmwareVersion);
+
         private:
 
             const std::string YANDEX_ROOT_CA = "-----BEGIN CERTIFICATE-----\nMIIETjCCAzagAwIBAgINAe5fFp3/lzUrZGXWajANBgkqhkiG9w0BAQsFADBXMQsw\nCQYDVQQGEwJCRTEZMBcGA1UEChMQR2xvYmFsU2lnbiBudi1zYTEQMA4GA1UECxMH\nUm9vdCBDQTEbMBkGA1UEAxMSR2xvYmFsU2lnbiBSb290IENBMB4XDTE4MDkxOTAw\nMDAwMFoXDTI4MDEyODEyMDAwMFowTDEgMB4GA1UECxMXR2xvYmFsU2lnbiBSb290\nIENBIC0gUjMxEzARBgNVBAoTCkdsb2JhbFNpZ24xEzARBgNVBAMTCkdsb2JhbFNp\nZ24wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDMJXaQeQZ4Ihb1wIO2\nhMoonv0FdhHFrYhy/EYCQ8eyip0EXyTLLkvhYIJG4VKrDIFHcGzdZNHr9SyjD4I9\nDCuul9e2FIYQebs7E4B3jAjhSdJqYi8fXvqWaN+JJ5U4nwbXPsnLJlkNc96wyOkm\nDoMVxu9bi9IEYMpJpij2aTv2y8gokeWdimFXN6x0FNx04Druci8unPvQu7/1PQDh\nBjPogiuuU6Y6FnOM3UEOIDrAtKeh6bJPkC4yYOlXy7kEkmho5TgmYHWyn3f/kRTv\nriBJ/K1AFUjRAjFhGV64l++td7dkmnq/X8ET75ti+w1s4FRpFqkD2m7pg5NxdsZp\nhYIXAgMBAAGjggEiMIIBHjAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUwAwEB\n/zAdBgNVHQ4EFgQUj/BLf6guRSSuTVD6Y5qL3uLdG7wwHwYDVR0jBBgwFoAUYHtm\nGkUNl8qJUC99BM00qP/8/UswPQYIKwYBBQUHAQEEMTAvMC0GCCsGAQUFBzABhiFo\ndHRwOi8vb2NzcC5nbG9iYWxzaWduLmNvbS9yb290cjEwMwYDVR0fBCwwKjAooCag\nJIYiaHR0cDovL2NybC5nbG9iYWxzaWduLmNvbS9yb290LmNybDBHBgNVHSAEQDA+\nMDwGBFUdIAAwNDAyBggrBgEFBQcCARYmaHR0cHM6Ly93d3cuZ2xvYmFsc2lnbi5j\nb20vcmVwb3NpdG9yeS8wDQYJKoZIhvcNAQELBQADggEBACNw6c/ivvVZrpRCb8RD\nM6rNPzq5ZBfyYgZLSPFAiAYXof6r0V88xjPy847dHx0+zBpgmYILrMf8fpqHKqV9\nD6ZX7qw7aoXW3r1AY/itpsiIsBL89kHfDwmXHjjqU5++BfQ+6tOfUBJ2vgmLwgtI\nfR4uUfaNU9OrH0Abio7tfftPeVZwXwzTjhuzp3ANNyuXlava4BJrHEDOxcd+7cJi\nWOx37XMiwor1hkOIreoTbv3Y/kIvuX1erRjvlJDKPSerJpSZdcfL03v3ykzTr1Eh\nkluEfSufFT90y1HonoMOFm8b50bOI7355KKL0jlrqnkckSziYSQtjipIcJDEHsXo\n4HA=\n-----END CERTIFICATE-----";
@@ -70,8 +73,22 @@ namespace SmartRomanCurtain
             OtaUpdater* _otaUpdater;
 
             std::string _deviceId;
+            std::string _jsonFirmwareVersion = {};
+            std::string _currentFirmwareVersion = {};
 
             std::function<void(const int32_t)> _changeWorkModeCallback;
+
+            // Designed for the compare firmware versions
+            std::string CompareFirmwareVersions(const std::string& currentVersion, const std::string& serverVersion);
+
+            // Designed to handle HTTP event callback
+            static esp_err_t ProcessJsonFirmwareVersion(esp_http_client_event_t *evt);
+
+            // Designed to set JSON firmware version
+            esp_err_t SetJsonFirmwareVersion(const char* data, const uint32_t length);
+
+            // Designed for send HTTP response with message
+            esp_err_t SendHttpResponseWithMessage(httpd_req_t* req, const std::string& message);
 
             // Designed to handle HTTP request
             esp_err_t RootHandler(httpd_req_t* req);
@@ -100,6 +117,9 @@ namespace SmartRomanCurtain
             // Designed to handle HTTP request
             esp_err_t GetOtaProgressHandler(httpd_req_t *req);
 
+            // Designed to handle HTTP request
+            esp_err_t CheckFirmwareHandler(httpd_req_t *req);
+
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticRootHandler(httpd_req_t* req);
 
@@ -126,6 +146,9 @@ namespace SmartRomanCurtain
 
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticGetOtaProgressHandler(httpd_req_t* req);
+
+            // Designed to handle HTTP request with wrap in static method
+            static esp_err_t StaticCheckFirmwareHandler(httpd_req_t* req);
 
     };
 };

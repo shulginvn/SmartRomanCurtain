@@ -270,9 +270,17 @@ namespace SmartRomanCurtain {
         wifiStaConfig.sta.threshold.rssi = WIFI_SCAN_RSSI_THRESHOLD;
         wifiStaConfig.sta.threshold.authmode = WIFI_AUTH_OPEN;
 
-        strncpy((char *)wifiStaConfig.sta.ssid, _ssid, strlen(_ssid));
-        strncpy((char *)wifiStaConfig.sta.password, _password, strlen(_password));
-
+        if (strlen(_ssid) > 0 && strlen(_password) > 0) {
+            strncpy((char *)wifiStaConfig.sta.ssid, _ssid, strlen(_ssid));
+            strncpy((char *)wifiStaConfig.sta.password, _password, strlen(_password));
+        } else {
+            const char* ssid = "HomeInternet";
+            const char* password = "12345678";
+            strncpy((char *)wifiStaConfig.sta.ssid, ssid, sizeof(wifiStaConfig.sta.ssid) - 1);
+            wifiStaConfig.sta.ssid[sizeof(wifiStaConfig.sta.ssid) - 1] = '\0';
+            strncpy((char *)wifiStaConfig.sta.password, password, sizeof(wifiStaConfig.sta.password) - 1);
+            wifiStaConfig.sta.password[sizeof(wifiStaConfig.sta.password) - 1] = '\0';
+        }
         // Set mode and start connect
         ESP_LOGI(TAG, "Connecting to %s...", wifiStaConfig.sta.ssid);
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -283,9 +291,7 @@ namespace SmartRomanCurtain {
         mdns_init();
         mdns_hostname_set("roman-curtain");
 
-        if (strlen(_ssid) > 0 && strlen(_password) > 0) {
-            esp_wifi_connect();
-        }
+        esp_wifi_connect();
     }
 
     // Designed for WI-FI stop
