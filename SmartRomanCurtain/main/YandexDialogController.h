@@ -17,26 +17,28 @@ namespace SmartRomanCurtain
             // Designed to setup configure
             void Initialize();
 
+            // Designed to set authenticate information
+            void SetMqttAuthInfo(const std::string mqttUsername, const std::string mqttPassword);
+
             // Designed to set callback
             void Set(const std::function<void(const std::string&)>& changeMotorStateCallback);
 
             // Designed to set callback
             void Set(const std::function<void(const std::uint32_t)>& changeMotorRangeCallback);
 
-            // Designed to save device id
-            std::string GetDeviceId() const;
+            // Designed to reset configure and stop
+            void Deinitialize();
 
         private:
             const std::string TAG = "MQTT_EXAMPLE";
 
             const std::string MQTT_BROKER = "mqtts://mqtt.cloud.yandex.net";
             const uint32_t MQTT_PORT = 8883;
-            const std::string MQTT_USERNAME = "are053ubgehfq0g0p9np";
-            const std::string MQTT_PASSWORD = "ywMWfT^a9[$Pem";
-            const std::string MQTT_COMMANDS_TOPIC = "$devices/" + MQTT_USERNAME + "/commands";
-            const std::string MQTT_EVENTS_TOPIC = "$devices/" + MQTT_USERNAME + "/events";
 
-            esp_mqtt_client_handle_t _client;
+            std::string _mqttUsername = {};
+            std::string _mqttPassword = {};
+
+            esp_mqtt_client_handle_t _client = nullptr;
 
             std::function<void(const std::string&)> _changeMotorStateCallback;
             std::function<void(const std::uint32_t)> _changeMotorRangeCallback;

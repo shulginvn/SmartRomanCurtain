@@ -15,7 +15,7 @@ namespace SmartRomanCurtain
     }
 
     // Designed to store data in flash memory
-    void NvsMemoryManager::SaveDataToFlash(const char* key, int32_t value)
+    void NvsMemoryManager::WriteDataToFlash(const char* key, int32_t value)
     {
         nvs_handle_t my_handle;
         esp_err_t err = nvs_open("storage", NVS_READWRITE, &my_handle);
@@ -58,7 +58,7 @@ namespace SmartRomanCurtain
     }
 
     // Designed to store data from flash memory
-    void NvsMemoryManager::SaveStrToFlash(const char* key, const char* value)
+    void NvsMemoryManager::WriteDataToFlash(const char* key, const char* value)
     {
         nvs_handle_t my_handle;
         esp_err_t err = nvs_open("storage", NVS_READWRITE, &my_handle);
@@ -77,7 +77,7 @@ namespace SmartRomanCurtain
     }
 
     // Designed to read data from flash memory
-    int32_t NvsMemoryManager::ReadStrFromFlash(const char* key, const char* value)
+    int32_t NvsMemoryManager::ReadDataFromFlash(const char* key, const char* value)
     {
         nvs_handle_t my_handle;
         esp_err_t err = nvs_open("storage", NVS_READWRITE, &my_handle);

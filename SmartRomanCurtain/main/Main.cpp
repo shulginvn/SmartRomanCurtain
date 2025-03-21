@@ -12,7 +12,6 @@ namespace SmartRomanCurtain
 {
     std::string CURRENT_FIRMWARE_VERSION = "1.00";
 
-    //TuyaController _tuyaController;
     WebServerManager _webServerManager;
     NvsMemoryManager _nvsMemoryManager;
     MotorController _motorController;
@@ -33,6 +32,8 @@ namespace SmartRomanCurtain
         esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
         esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
+        _webServerManager.SetCurrentFirmwareVersion(CURRENT_FIRMWARE_VERSION);
+
         _webServerManager.Set(&_motorController);
         _webServerManager.Set(&_nvsMemoryManager);
         _webServerManager.Set(&_deepSleepNtp);
@@ -42,9 +43,6 @@ namespace SmartRomanCurtain
         _deepSleepNtp.Set(&_nvsMemoryManager);
         _yandexDialogController.Set([&](const std::string& motorState) { _motorController.HandleMotorStateChanged(motorState); });
         _yandexDialogController.Set([&](const std::uint32_t range) { _motorController.HandleMotorRangeChanged(range); });
-        _webServerManager.SetDeviceId(_yandexDialogController.GetDeviceId());
-        _webServerManager.SetCurrentFirmwareVersion(CURRENT_FIRMWARE_VERSION);
-        //_tuyaController.Set([=](const std::string& motorState) { _motorController.HandleMotorStateChanged(motorState); });
 
         esp_netif_init();
         esp_event_loop_create_default();
@@ -52,9 +50,32 @@ namespace SmartRomanCurtain
         _nvsMemoryManager.Initialize();
         _webServerManager.Initialize();
         _motorController.Initialize();
-        _yandexDialogController.Initialize();
-        //_tuyaController.Initialize();
 
+        // Read from NVS
+        int32_t uniqueId = 0;
+        _nvsMemoryManager.ReadDataFromFlash("UniqueId", &uniqueId);
+        // Set unique device parameters
+        _webServerManager.SetDeviceId(uniqueId);
+
+        // Read from NVS
+        char bufferUsername[64] = { }, bufferPassword[64] = { };
+        int32_t resMgttLog = _nvsMemoryManager.ReadDataFromFlash("MqttLog", bufferUsername);
+        int32_t resMqttPwdLog = _nvsMemoryManager.ReadDataFromFlash("MqttPwd", bufferPassword);
+        std::string mqttUsername = std::string(bufferUsername), mqttPassword = std::string(bufferPassword);
+
+        // Set MQTT parameters
+        if (resMgttLog == ESP_OK && resMqttPwdLog == ESP_OK && !mqttUsername.empty() && !mqttPassword.empty()) {
+            _yandexDialogController.SetMqttAuthInfo(mqttUsername, mqttPassword);
+            _yandexDialogController.Initialize();
+        }
+
+        _webServerManager.Set([&](const std::string& mqttUsername, const std::string& mqttPassword) {
+            _yandexDialogController.Deinitialize();
+            _yandexDialogController.SetMqttAuthInfo(mqttUsername, mqttPassword);
+            _yandexDialogController.Initialize();
+        });
+
+        // Start NET services
         _wiFiConnector.Connect(_webServerManager.GetLogin(), _webServerManager.GetPassword());
         _webServerManager.StartWebServer();
 

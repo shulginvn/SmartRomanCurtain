@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <string.h>
 
 #include "DeepSleepNtp.h"
 #include "NvsMemoryManager.h"
@@ -41,6 +42,9 @@ namespace SmartRomanCurtain
             // Designed to set instance
             void Set(OtaUpdater* otaUpdater);
 
+            // Designed for start MQTT with actual login and password
+            void Set(const std::function<void(const std::string&, const std::string&)> setMqttAuthInfoWithInit);
+
             // Designed to run HTTP server
             httpd_handle_t StartWebServer(void);
 
@@ -51,7 +55,7 @@ namespace SmartRomanCurtain
             const char* GetPassword();
 
             // Designed to save device id
-            void SetDeviceId(std::string deviceId);
+            void SetDeviceId(const int32_t deviceId);
 
             // Designed for set current firmware version
             void SetCurrentFirmwareVersion(const std::string& currentFirmwareVersion);
@@ -62,6 +66,7 @@ namespace SmartRomanCurtain
             const char* SERVER_URL = "https://functions.yandexcloud.net/d4eks3cvsg1jd1ev016f";
 
             static const char* _htmlForm;
+            static const char* _htmlFormServiceMenu;
             const std::string TAG = "HTTP_SERVER";
 
             char _login[32] = {0};
@@ -72,11 +77,13 @@ namespace SmartRomanCurtain
             DeepSleepNtp* _deepSleepNtp;
             OtaUpdater* _otaUpdater;
 
-            std::string _deviceId;
+            int32_t _deviceId;
             std::string _jsonFirmwareVersion = {};
             std::string _currentFirmwareVersion = {};
+            std::string _mqttAuthData = {};
 
             std::function<void(const int32_t)> _changeWorkModeCallback;
+            std::function<void (const std::string&, const std::string&)> _setMqttAuthInfoWithInitCallback;
 
             // Designed for the compare firmware versions
             std::string CompareFirmwareVersions(const std::string& currentVersion, const std::string& serverVersion);
@@ -84,8 +91,14 @@ namespace SmartRomanCurtain
             // Designed to handle HTTP event callback
             static esp_err_t ProcessJsonFirmwareVersion(esp_http_client_event_t *evt);
 
+            // Designed to handle HTTP event callback
+            static esp_err_t ProcessMqttAuthInfo(esp_http_client_event_t *evt);
+
             // Designed to set JSON firmware version
             esp_err_t SetJsonFirmwareVersion(const char* data, const uint32_t length);
+
+            // Designed to set JSON firmware version
+            esp_err_t SetMqttAuthInfo(const char* data, const uint32_t length);
 
             // Designed for send HTTP response with message
             esp_err_t SendHttpResponseWithMessage(httpd_req_t* req, const std::string& message);
@@ -120,6 +133,9 @@ namespace SmartRomanCurtain
             // Designed to handle HTTP request
             esp_err_t CheckFirmwareHandler(httpd_req_t *req);
 
+            // Designed to handle HTTP request
+            esp_err_t SetUniqueIdHandler(httpd_req_t* req);
+
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticRootHandler(httpd_req_t* req);
 
@@ -149,6 +165,9 @@ namespace SmartRomanCurtain
 
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticCheckFirmwareHandler(httpd_req_t* req);
+
+            // Designed to handle HTTP request with wrap in static method
+            static esp_err_t StaticSetUniqueIdHandler(httpd_req_t* req);
 
     };
 };

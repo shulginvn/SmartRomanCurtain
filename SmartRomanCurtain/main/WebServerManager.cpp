@@ -6,7 +6,71 @@ namespace SmartRomanCurtain
     extern const uint8_t rootCA_crt_start[] asm("_binary_rootCA_crt_start"); // @suppress("Unused variable declaration in file scope")
     extern const uint8_t rootCA_crt_end[] asm("_binary_rootCA_crt_end"); // @suppress("Unused variable declaration in file scope")
 
-    const char *WebServerManager::_htmlForm =
+    const char *WebServerManager::_htmlFormServiceMenu =
+    "<!DOCTYPE html>"
+    "<html>"
+    "<head>"
+    "<meta charset=\"UTF-8\">"
+    "<title>Home Curtain Configuration Panel</title>"
+
+    "<style>"
+    "body { font-family: Arial, sans-serif; margin: 20px; }"
+    "h1 { color: #333; }"
+    "table { width: 100%; border-collapse: collapse; table-layout: fixed; }"
+    "td { padding: 8px; text-align: left; vertical-align: middle; }"
+    "form { margin-bottom: 20px; }"
+    "input[type='text'], input[type='number'], input[type='password'], input[type='checkbox'], select {"
+    " padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box;"
+    " border: 1px solid #ccc; border-radius: 4px;"
+    "}"
+    "input[type='checkbox'] {"
+    "width: auto;"
+    "margin: 5px 0;"
+    "}"
+    "button {"
+    " background-color: #4CAF50; color: white; padding: 10px 15px; border: none;"
+    " border-radius: 4px; cursor: pointer; font-size: 16px;"
+    "}"
+    "button:hover { background-color: #45a049; }"
+    "</style>"
+
+    "</head>"
+
+    "<body>"
+
+    "<h2>Настройка уникального идентификатора</h2>"
+    "<div>"
+    " <label>Номер устройства:</label>"
+    " <input type='text' id='uniqueId' placeholder='Enter your unique Id' required><br>"
+    "<button onclick=\"setUniqueId()\">Отправить</button>"
+    "</div>"
+
+    "<script>"
+
+    "function setUniqueId() {"
+    "    const uniqueId = document.getElementById('uniqueId').value;"
+    "    fetch('/setUniqueId', {"
+    "        method: 'POST',"
+    "        headers: { 'Content-Type': 'application/json' },"
+    "        body: JSON.stringify({ id: uniqueId })"
+    "    })"
+    "    .then(response => response.json())"
+    "    .then(data => {"
+    "       if (data.status === \"success\") {"
+    "           alert(\"Unique Id успешно принят.\");"
+    "       } else {"
+    "           alert(\"Ошибка: \" + data.message);"
+    "       }"
+    "})"
+    "    .catch(error => console.error('Error:', error));"
+    "}"
+
+    "</script>"
+
+    "</body>"
+    "</html>";
+
+const char *WebServerManager::_htmlForm =
     "<!DOCTYPE html>"
     "<html>"
     "<head>"
@@ -270,6 +334,12 @@ namespace SmartRomanCurtain
         _otaUpdater = otaUpdater;
     }
 
+    // Designed for start MQTT with actual login and password
+    void WebServerManager::Set(const std::function<void (const std::string&, const std::string&)> setMqttAuthInfoWithInitCallback)
+    {
+        _setMqttAuthInfoWithInitCallback = setMqttAuthInfoWithInitCallback;
+    }
+
     // Designed to get login
     const char* WebServerManager::GetLogin()
     {
@@ -285,8 +355,22 @@ namespace SmartRomanCurtain
     // Designed to handle HTTP request
     esp_err_t WebServerManager::RootHandler(httpd_req_t *req)
     {
-
         httpd_resp_set_type(req, "text/html");
+
+        char query[100];
+        if (httpd_req_get_url_query_str(req, query, sizeof(query)) == ESP_OK) {
+
+            ESP_LOGI(TAG.c_str(), "BUF: %s", query);
+            // Check "page" parameter on exist
+            char page[20];
+            if (httpd_query_key_value(query, "page", page, sizeof(page)) == ESP_OK) {
+                if (strcmp(page, "serviceMenu") == 0) {
+                    // Return service menu
+                    httpd_resp_send(req, _htmlFormServiceMenu, HTTPD_RESP_USE_STRLEN);
+                    return ESP_OK;
+                }
+            }
+        }
 
         httpd_resp_send(req, _htmlForm, HTTPD_RESP_USE_STRLEN);
 
@@ -334,8 +418,8 @@ namespace SmartRomanCurtain
 
         httpd_resp_sendstr(req, "<h1>Login and Password was received. The curtain will be rebooted.</h1><a href=\"/\">Back</a>");
 
-        _nvsMemoryManager->SaveStrToFlash("login", _login);
-        _nvsMemoryManager->SaveStrToFlash("password", _password);
+        _nvsMemoryManager->WriteDataToFlash("login", _login);
+        _nvsMemoryManager->WriteDataToFlash("password", _password);
 
         esp_restart();
 
@@ -391,7 +475,7 @@ namespace SmartRomanCurtain
             httpd_resp_sendstr(req, "Calibration value updated successfully.");
         } else if (strcmp(action, "save") == 0) {
             if (strcmp(direction, "up") == 0) {
-                _nvsMemoryManager->SaveDataToFlash("bc", _motorController->GetBaseCalibration());
+                _nvsMemoryManager->WriteDataToFlash("bc", _motorController->GetBaseCalibration());
             }
             httpd_resp_sendstr(req, "Calibration value saved successfully.");
         } else {
@@ -519,6 +603,29 @@ namespace SmartRomanCurtain
         return ESP_OK;
     }
 
+    // Designed to handle HTTP event callback
+    esp_err_t WebServerManager::ProcessMqttAuthInfo(esp_http_client_event_t *evt)
+    {
+        switch ((int)evt->event_id) {
+            case HTTP_EVENT_ON_DATA: {
+                WebServerManager* self = static_cast<WebServerManager*>(evt->user_data);
+                if (self) {
+                    return self->SetMqttAuthInfo((char *)evt->data, evt->data_len);
+                }
+            }    break;
+            default:
+                break;
+        }
+        return ESP_OK;
+    }
+
+    // Designed to set JSON MQTT authenticate information
+    esp_err_t WebServerManager::SetMqttAuthInfo(const char* data, const uint32_t length)
+    {
+        _mqttAuthData.append(data, length);
+        return ESP_OK;
+    }
+
     // Designed to handle HTTP request
     esp_err_t WebServerManager::SetEmailHandler(httpd_req_t *req)
     {
@@ -537,6 +644,8 @@ namespace SmartRomanCurtain
         config.method = HTTP_METHOD_POST;
         config.cert_pem = (const char *)YANDEX_ROOT_CA.c_str();
         config.timeout_ms = 5000;
+        config.event_handler = ProcessMqttAuthInfo;
+        config.user_data = this;
 
         // Initializing the HTTP Client
         esp_http_client_handle_t client = esp_http_client_init(&config);
@@ -544,7 +653,9 @@ namespace SmartRomanCurtain
         // Setting the Content-Type header
         esp_http_client_set_header(client, "Content-Type", "application/json");
 
-        std::string jsonRequest = "[" + std::string(content) + ", {\"device_id\":\"" + _deviceId + "\"}]";
+        std::string jsonRequest = "[" + std::string(content) + ", {\"device_id\":\"" + std::to_string(_deviceId) + "\"}]";
+
+        _mqttAuthData.clear();
 
         // Set the request body
         esp_http_client_set_post_field(client, jsonRequest.c_str(), strlen(jsonRequest.c_str()));
@@ -552,6 +663,38 @@ namespace SmartRomanCurtain
         // Execute the request
         esp_err_t err = esp_http_client_perform(client);
         char message[128];
+
+        ESP_LOGI(TAG.c_str(), "%s", _mqttAuthData.c_str());
+
+        cJSON *root = cJSON_Parse(_mqttAuthData.c_str());
+        if (root == NULL) {
+            ESP_LOGE(TAG.c_str(), "Failed to JSON parse");
+            esp_http_client_cleanup(client);
+            cJSON_Delete(root);
+            httpd_resp_send(req, "HTTP POST request failed.", HTTPD_RESP_USE_STRLEN);
+            return ESP_FAIL;
+        }
+
+        // Extract firmware version or error
+        cJSON *mqttLogin = cJSON_GetObjectItem(root, "MqttLogin");
+        cJSON *mqttPassword = cJSON_GetObjectItem(root, "MqttPassword");
+
+        if (mqttLogin == NULL || mqttPassword == NULL) {
+            ESP_LOGE(TAG.c_str(), "Failed to JSON parse");
+            esp_http_client_cleanup(client);
+            cJSON_Delete(root);
+            httpd_resp_send(req, "HTTP POST request failed.", HTTPD_RESP_USE_STRLEN);
+            return ESP_FAIL;
+        }
+
+        ESP_LOGI(TAG.c_str(), "MqttLogin=%s, MqttPassword=%s", mqttLogin->valuestring, mqttPassword->valuestring);
+
+        // Call only once with initialization MQTT
+        _nvsMemoryManager->WriteDataToFlash("MqttLog", mqttLogin->valuestring);
+        _nvsMemoryManager->WriteDataToFlash("MqttPwd", mqttPassword->valuestring);
+        std::string mqttLoginString = std::string(mqttLogin->valuestring);
+        std::string mqttPasswordString = std::string(mqttPassword->valuestring);
+        _setMqttAuthInfoWithInitCallback(mqttLoginString, mqttPasswordString);
 
         if (err == ESP_OK) {
             snprintf(message, sizeof(message), "HTTP POST Status = %d", esp_http_client_get_status_code(client));
@@ -563,6 +706,7 @@ namespace SmartRomanCurtain
 
         // Freeing up resources
         esp_http_client_cleanup(client);
+        cJSON_Delete(root);
 
         // Send message to client
         httpd_resp_send(req, message, HTTPD_RESP_USE_STRLEN);
@@ -573,8 +717,10 @@ namespace SmartRomanCurtain
     // Designed to setup configure
     void WebServerManager::Initialize()
     {
-        _nvsMemoryManager->ReadStrFromFlash("login", _login);
-        _nvsMemoryManager->ReadStrFromFlash("password", _password);
+        _setMqttAuthInfoWithInitCallback = nullptr;
+        _nvsMemoryManager->ReadDataFromFlash("login", _login);
+        _nvsMemoryManager->ReadDataFromFlash("password", _password);
+        _deviceId = 0;
     }
 
     // Designed to run HTTP server
@@ -671,9 +817,72 @@ namespace SmartRomanCurtain
                 .user_ctx = this
             };
             httpd_register_uri_handler(server, &checkFirmwareUri);
+
+            httpd_uri_t setUniqueIdUri = {
+                .uri = "/setUniqueId",
+                .method = HTTP_POST,
+                .handler = StaticSetUniqueIdHandler,
+                .user_ctx = this
+            };
+            httpd_register_uri_handler(server, &setUniqueIdUri);
         }
 
         return server;
+    }
+
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticSetUniqueIdHandler(httpd_req_t* req)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->SetUniqueIdHandler(req);
+        }
+        return ESP_FAIL;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::SetUniqueIdHandler(httpd_req_t* req)
+    {
+        char buffer[128];
+        int ret = httpd_req_recv(req, buffer, sizeof(buffer) - 1);
+        if (ret <= 0) {
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+        buffer[ret] = '\0';
+
+        // Parse JSON
+        cJSON *root = cJSON_Parse(buffer);
+        if (root == NULL) {
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        // Extract UniqieId
+        cJSON *id = cJSON_GetObjectItem(root, "id");
+        if (id == NULL) {
+            cJSON_Delete(root);
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        ESP_LOGI(TAG.c_str(), "Получен ID: %s", id->valuestring);
+        _deviceId = std::stoi(id->valuestring);
+        _nvsMemoryManager->WriteDataToFlash("UniqueId", _deviceId);
+
+        // Send response
+        cJSON *response = cJSON_CreateObject();
+        cJSON_AddStringToObject(response, "status", "success");
+        cJSON_AddStringToObject(response, "message", "Unique Id принят");
+        const char *response_str = cJSON_Print(response);
+
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, response_str, HTTPD_RESP_USE_STRLEN);
+
+        cJSON_Delete(root);
+        cJSON_Delete(response);
+
+        return ESP_OK;
     }
 
     // Designed to handle HTTP request with wrap in static method
@@ -901,7 +1110,7 @@ namespace SmartRomanCurtain
     }
 
     // Designed to save device id
-    void WebServerManager::SetDeviceId(std::string deviceId)
+    void WebServerManager::SetDeviceId(const int32_t deviceId)
     {
         _deviceId = deviceId;
     }

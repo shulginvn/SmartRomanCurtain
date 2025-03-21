@@ -97,13 +97,13 @@ namespace SmartRomanCurtain
     void DeepSleepNtp::SetSleepModeParams(const std::vector<StSleepModeParamas>& sleepModeParamsList)
     {
         _sleepModeParamsList = std::move(sleepModeParamsList);
-        _nvsMemoryManager->SaveDataToFlash("smpq", _sleepModeParamsList.size());
+        _nvsMemoryManager->WriteDataToFlash("smpq", _sleepModeParamsList.size());
 
         for (int32_t i = 0; i < _sleepModeParamsList.size(); i++) {
-            _nvsMemoryManager->SaveDataToFlash(("es" + std::to_string(i)).c_str(), _sleepModeParamsList.at(i).enableSleep);
-            _nvsMemoryManager->SaveDataToFlash(("ssh" + std::to_string(i)).c_str(), _sleepModeParamsList.at(i).sleepStartHour);
-            _nvsMemoryManager->SaveDataToFlash(("ssm" + std::to_string(i)).c_str(), _sleepModeParamsList.at(i).sleepStartMinute);
-            _nvsMemoryManager->SaveDataToFlash(("sdh" + std::to_string(i)).c_str(), _sleepModeParamsList.at(i).sleepDurationHours);
+            _nvsMemoryManager->WriteDataToFlash(("es" + std::to_string(i)).c_str(), _sleepModeParamsList.at(i).enableSleep);
+            _nvsMemoryManager->WriteDataToFlash(("ssh" + std::to_string(i)).c_str(), _sleepModeParamsList.at(i).sleepStartHour);
+            _nvsMemoryManager->WriteDataToFlash(("ssm" + std::to_string(i)).c_str(), _sleepModeParamsList.at(i).sleepStartMinute);
+            _nvsMemoryManager->WriteDataToFlash(("sdh" + std::to_string(i)).c_str(), _sleepModeParamsList.at(i).sleepDurationHours);
         }
     }
 

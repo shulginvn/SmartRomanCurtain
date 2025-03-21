@@ -30,9 +30,11 @@ namespace SmartRomanCurtain {
         esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
 
         switch (static_cast<esp_mqtt_event_id_t>(event_id)) {
-            case MQTT_EVENT_CONNECTED:
-                ESP_LOGI(TAG.c_str(), "MQTT connected");
-                esp_mqtt_client_subscribe(_client, MQTT_COMMANDS_TOPIC.c_str(), 0);
+            case MQTT_EVENT_CONNECTED: {
+                    ESP_LOGI(TAG.c_str(), "MQTT connected");
+                    const std::string MQTT_COMMANDS_TOPIC = "$devices/" + _mqttUsername + "/commands";
+                    esp_mqtt_client_subscribe(_client, MQTT_COMMANDS_TOPIC.c_str(), 0);
+                }
                 break;
 
             case MQTT_EVENT_DISCONNECTED:
@@ -59,6 +61,7 @@ namespace SmartRomanCurtain {
                     // Form JSON-response
                     std::string response = R"({"status": ")" + std::string("DONE") + R"("})";
 
+                    const std::string MQTT_EVENTS_TOPIC = "$devices/" + _mqttUsername + "/events";
                     // Sending a response to the event topic
                     esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
                     ESP_LOGI(TAG.c_str(), "Sent state response: %s", response.c_str());
@@ -73,23 +76,46 @@ namespace SmartRomanCurtain {
                 break;
         }
     }
+
+    // Designed to set authenticate information
+    void YandexDialogController::SetMqttAuthInfo(const std::string mqttUsername, const std::string mqttPassword)
+    {
+        _mqttUsername = mqttUsername;
+        _mqttPassword = mqttPassword;
+    }
+
     // Designed to setup configure
     void YandexDialogController::Initialize()
     {
         esp_mqtt_client_config_t mqttCfg = {};
         mqttCfg.uri = MQTT_BROKER.c_str();
         mqttCfg.port = MQTT_PORT;
-        mqttCfg.username = MQTT_USERNAME.c_str();
-        mqttCfg.password =  MQTT_PASSWORD.c_str();
+        mqttCfg.username = _mqttUsername.c_str();
+        mqttCfg.password =  _mqttPassword.c_str();
         mqttCfg.cert_pem = (const char *)rootCA_crt_start;
 
-        ESP_LOGI(TAG.c_str(), "esp_mqtt_client_init");
         _client = esp_mqtt_client_init(&mqttCfg);
         ESP_LOGI(TAG.c_str(), "esp_mqtt_client_init");
         esp_mqtt_client_register_event(_client, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, &StaticHandleMqttEvent, this);
         ESP_LOGI(TAG.c_str(), "esp_mqtt_client_register_event");
         esp_mqtt_client_start(_client);
         ESP_LOGI(TAG.c_str(), "esp_mqtt_client_start");
+    }
+
+    // Designed to reset configure and stop
+    void YandexDialogController::Deinitialize()
+    {
+        if (_client != nullptr) {
+            ESP_LOGI(TAG.c_str(), "Disconnecting MQTT client");
+            esp_mqtt_client_disconnect(_client);
+            ESP_LOGI(TAG.c_str(), "Stopping MQTT client");
+            esp_mqtt_client_stop(_client);
+            ESP_LOGI(TAG.c_str(), "Destroying MQTT client");
+            esp_mqtt_client_destroy(_client);
+            _client = nullptr;
+        }
+
+        ESP_LOGI(TAG.c_str(), "MQTT client deinitialized");
     }
 
     // Designed to set callback
@@ -102,12 +128,6 @@ namespace SmartRomanCurtain {
     void YandexDialogController::Set(const std::function<void(const std::uint32_t)>& changeMotorRangeCallback)
     {
         _changeMotorRangeCallback = changeMotorRangeCallback;
-    }
-
-    // Designed to save device id
-    std::string YandexDialogController::GetDeviceId() const
-    {
-        return MQTT_USERNAME;
     }
 
 } /* namespace SmartRomanCurtain */

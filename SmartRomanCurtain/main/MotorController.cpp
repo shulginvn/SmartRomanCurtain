@@ -195,7 +195,7 @@ namespace SmartRomanCurtain
                             if (WaitPause(PAUSE_AFTER_CLOSE)) {
                                 SendMotorCommand(EnMotorCommand::OPEN);
                                 _openCloseCounter++;
-                                _nvsMemoryManager->SaveDataToFlash("occ", _openCloseCounter);
+                                _nvsMemoryManager->WriteDataToFlash("occ", _openCloseCounter);
                             }
                         }
                     }
@@ -319,6 +319,7 @@ namespace SmartRomanCurtain
     // Designed to set position in pulses
     void MotorController::SetPositionInPulses(const int32_t pulses)
     {
+        SendMotorCommand(EnMotorCommand::STOP);
         portENTER_CRITICAL(&_motorMutex);
         _motorPosition = 1.0f * pulses / _baseCalibration;
         portEXIT_CRITICAL(&_motorMutex);
