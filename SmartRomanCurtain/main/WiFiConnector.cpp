@@ -155,7 +155,7 @@ namespace SmartRomanCurtain {
             wifiApConfig.ap.ssid_len = strlen("RomanCurtain");
             strncpy((char *)wifiApConfig.ap.password, "12345678", sizeof(wifiApConfig.ap.password) - 1);
             wifiApConfig.ap.password[sizeof(wifiApConfig.ap.password) - 1] = '\0';
-            wifiApConfig.ap.channel = 1;
+            wifiApConfig.ap.channel = 13;
             wifiApConfig.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
             wifiApConfig.ap.ssid_hidden = 0;
             wifiApConfig.ap.max_connection = 4;
@@ -183,6 +183,9 @@ namespace SmartRomanCurtain {
             ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
             ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifiApConfig));
             ESP_ERROR_CHECK(esp_wifi_start());
+
+            int8_t power = 80; // 20 dBm
+            esp_wifi_set_max_tx_power(power);
 
             // Reset counter
             _retryCount = 0;
@@ -269,6 +272,7 @@ namespace SmartRomanCurtain {
         wifiStaConfig.sta.sort_method = WIFI_CONNECT_AP_BY_SIGNAL;
         wifiStaConfig.sta.threshold.rssi = WIFI_SCAN_RSSI_THRESHOLD;
         wifiStaConfig.sta.threshold.authmode = WIFI_AUTH_OPEN;
+        wifiStaConfig.sta.channel = 1;
 
         if (strlen(_ssid) > 0 && strlen(_password) > 0) {
             strncpy((char *)wifiStaConfig.sta.ssid, _ssid, strlen(_ssid));
