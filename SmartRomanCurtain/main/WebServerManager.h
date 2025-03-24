@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <functional>
+#include <map>
+#include <unordered_map>
 
 #include "esp_http_server.h"
 #include "esp_http_client.h"
@@ -45,9 +47,6 @@ namespace SmartRomanCurtain
             // Designed for start MQTT with actual login and password
             void Set(const std::function<void(const std::string&, const std::string&)> setMqttAuthInfoWithInit);
 
-            // Designed to run HTTP server
-            httpd_handle_t StartWebServer(void);
-
             // Designed to get login
             const char* GetLogin();
 
@@ -59,6 +58,12 @@ namespace SmartRomanCurtain
 
             // Designed for set current firmware version
             void SetCurrentFirmwareVersion(const std::string& currentFirmwareVersion);
+
+            // Designed to set callback
+            void Set(const std::function<void(const std::string&)>& changeMotorStateCallback);
+
+            // Designed to run HTTP server
+            httpd_handle_t StartWebServer(void);
 
         private:
 
@@ -84,9 +89,7 @@ namespace SmartRomanCurtain
 
             std::function<void(const int32_t)> _changeWorkModeCallback;
             std::function<void (const std::string&, const std::string&)> _setMqttAuthInfoWithInitCallback;
-
-            // Designed for the compare firmware versions
-            std::string CompareFirmwareVersions(const std::string& currentVersion, const std::string& serverVersion);
+            std::function<void(const std::string&)> _changeMotorStateCallback;
 
             // Designed to handle HTTP event callback
             static esp_err_t ProcessJsonFirmwareVersion(esp_http_client_event_t *evt);
@@ -136,6 +139,9 @@ namespace SmartRomanCurtain
             // Designed to handle HTTP request
             esp_err_t SetUniqueIdHandler(httpd_req_t* req);
 
+            // Designed to handle HTTP request
+            esp_err_t ControlCurtainHandler(httpd_req_t* req);
+
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticRootHandler(httpd_req_t* req);
 
@@ -169,6 +175,11 @@ namespace SmartRomanCurtain
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticSetUniqueIdHandler(httpd_req_t* req);
 
+            // Designed to handle HTTP request with wrap in static method
+            static esp_err_t StaticControlCurtainHandler(httpd_req_t* req);
+
+            // Designed for the compare firmware versions
+            std::string CompareFirmwareVersions(const std::string& currentVersion, const std::string& serverVersion);
     };
 };
 

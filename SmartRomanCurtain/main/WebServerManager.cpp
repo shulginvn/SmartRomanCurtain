@@ -6,6 +6,7 @@ namespace SmartRomanCurtain
     extern const uint8_t rootCA_crt_start[] asm("_binary_rootCA_crt_start"); // @suppress("Unused variable declaration in file scope")
     extern const uint8_t rootCA_crt_end[] asm("_binary_rootCA_crt_end"); // @suppress("Unused variable declaration in file scope")
 
+    // Service menu
     const char *WebServerManager::_htmlFormServiceMenu =
     "<!DOCTYPE html>"
     "<html>"
@@ -24,12 +25,13 @@ namespace SmartRomanCurtain
     " border: 1px solid #ccc; border-radius: 4px;"
     "}"
     "input[type='checkbox'] {"
-    "width: auto;"
-    "margin: 5px 0;"
+    " width: auto;"
+    " margin: 5px 0;"
     "}"
     "button {"
     " background-color: #4CAF50; color: white; padding: 10px 15px; border: none;"
     " border-radius: 4px; cursor: pointer; font-size: 16px;"
+    " min-width: 125px;"
     "}"
     "button:hover { background-color: #45a049; }"
     "</style>"
@@ -38,121 +40,11 @@ namespace SmartRomanCurtain
 
     "<body>"
 
-    "<h2>Настройка уникального идентификатора</h2>"
+    "<h2>Настройка уникальных параметров устройства</h2>"
     "<div>"
-    " <label>Номер устройства:</label>"
-    " <input type='text' id='uniqueId' placeholder='Enter your unique Id' required><br>"
+    " <label>Уникальный идентификатор:</label>"
+    " <input type='text' id='uniqueId' placeholder='Введите уникальный идентификатор' required><br>"
     "<button onclick=\"setUniqueId()\">Отправить</button>"
-    "</div>"
-
-    "<script>"
-
-    "function setUniqueId() {"
-    "    const uniqueId = document.getElementById('uniqueId').value;"
-    "    fetch('/setUniqueId', {"
-    "        method: 'POST',"
-    "        headers: { 'Content-Type': 'application/json' },"
-    "        body: JSON.stringify({ id: uniqueId })"
-    "    })"
-    "    .then(response => response.json())"
-    "    .then(data => {"
-    "       if (data.status === \"success\") {"
-    "           alert(\"Unique Id успешно принят.\");"
-    "       } else {"
-    "           alert(\"Ошибка: \" + data.message);"
-    "       }"
-    "})"
-    "    .catch(error => console.error('Error:', error));"
-    "}"
-
-    "</script>"
-
-    "</body>"
-    "</html>";
-
-const char *WebServerManager::_htmlForm =
-    "<!DOCTYPE html>"
-    "<html>"
-    "<head>"
-    "<meta charset=\"UTF-8\">"
-    "<title>Home Curtain Configuration Panel</title>"
-
-    "<style>"
-    "body { font-family: Arial, sans-serif; margin: 20px; }"
-    "h1 { color: #333; }"
-    "table { width: 100%; border-collapse: collapse; table-layout: fixed; }"
-    "td { padding: 8px; text-align: left; vertical-align: middle; }"
-    "form { margin-bottom: 20px; }"
-    "input[type='text'], input[type='number'], input[type='password'], input[type='checkbox'], select {"
-    " padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box;"
-    " border: 1px solid #ccc; border-radius: 4px;"
-    "}"
-    "input[type='checkbox'] {"
-    "width: auto;"
-    "margin: 5px 0;"
-    "}"
-    "button {"
-    " background-color: #4CAF50; color: white; padding: 10px 15px; border: none;"
-    " border-radius: 4px; cursor: pointer; font-size: 16px;"
-    "}"
-    "button:hover { background-color: #45a049; }"
-    "#statusMessage { margin-top: 15px; font-size: 16px; color: #333; }"
-    "progress { width: 100%; height: 25px; border-radius: 12px; overflow: hidden; background-color: #eee; border: 1px solid #ccc; margin: 5px 0 }"
-    "progress::-webkit-progress-bar { background-color: #eee; border-radius: 12px; }"
-    "progress::-webkit-progress-value { background-color: #4CAF50; border-radius: 12px; }"
-    "progress::-moz-progress-bar { background-color: #4CAF50; border-radius: 12px; }"
-    "</style>"
-
-    "</head>"
-    "<body>"
-    /*"<h1>Конфигурационная панель Римской Шторы</h1>"*/
-
-    "<h2>Настройка WI-FI</h2>"
-    "<form action=\"/submit\" method=\"post\">"
-    " <label for=\"login\">Логин:</label>"
-    " <input type=\"text\" id=\"login\" name=\"login\" placeholder=\"Enter your login\" required><br>"
-    " <label for=\"password\">Пароль:</label>"
-    " <input type=\"password\" id=\"password\" name=\"password\" placeholder=\"Enter your password\" required><br>"
-    " <button type=\"submit\">Настроить</button>"
-    "</form>"
-
-    "<h2>Связывание по email</h2>"
-    "<div>"
-    " <label for='email'>Значение Email:</label>"
-    " <input type='text' id='email' placeholder='Enter your email' required><br>"
-    "<button onclick=\"setEmail()\">Отправить</button>"
-    "</div>"
-
-    "<h2>Настройка режима сна</h2>"
-    "<form id=\"sleepForm\" action=\"/setSleepMode\" method=\"post\">"
-    "    <table>"
-    "        <tr>"
-    "            <td><b>Интервал 1.</b></td>"
-    "            <td><input type=\"checkbox\" id=\"enableSleepInterval1\" name=\"enableSleepInterval1\"></td>"
-    "            <td>Начало сна (часы, 0-23):</td>"
-    "            <td><input type=\"number\" id=\"sleepStartHourInterval1\" name=\"sleepStartHourInterval1\" min=\"0\" max=\"23\" required></td>"
-    "            <td>Начало сна (минуты, 0-59):</td>"
-    "            <td><input type=\"number\" id=\"sleepStartMinuteInterval1\" name=\"sleepStartMinuteInterval1\" min=\"0\" max=\"59\" required></td>"
-    "            <td>Длительность сна (часы):</td>"
-    "            <td><input type=\"number\" id=\"sleepDurationInterval1\" name=\"sleepDurationInterval1\" min=\"1\" required></td>"
-    "        </tr>"
-    "        <tr>"
-    "            <td><b>Интервал 2.</b></td>"
-    "            <td><input type=\"checkbox\" id=\"enableSleepInterval2\" name=\"enableSleepInterval2\"></td>"
-    "            <td>Начало сна (часы, 0-23):</td>"
-    "            <td><input type=\"number\" id=\"sleepStartHourInterval2\" name=\"sleepStartHourInterval2\" min=\"0\" max=\"23\" required></td>"
-    "            <td>Начало сна (минуты, 0-59):</td>"
-    "            <td><input type=\"number\" id=\"sleepStartMinuteInterval2\" name=\"sleepStartMinuteInterval2\" min=\"0\" max=\"59\" required></td>"
-    "            <td>Длительность (часы):</td>"
-    "            <td><input type=\"number\" id=\"sleepDurationInterval2\" name=\"sleepDurationInterval2\" min=\"1\" required></td>"
-    "        </tr>"
-    "    </table>"
-    "    <button type=\"button\" onclick=\"configureSleepMode()\">Сохранить</button>"
-    "</form>"
-    "<div>"
-    " <label for='currentTime'>Текущее время:</label>"
-    " <input type='text' id='currentTime' placeholder='Часы и минуты' readonly><br>"
-    "<button type=\"button\" onclick=\"getCurrentTime()\">Прочитать</button>"
     "</div>"
 
     "<h2>Настройка калибровочных параметров</h2>"
@@ -170,29 +62,24 @@ const char *WebServerManager::_htmlForm =
     " <button onclick='adjustPulses(\"up\", \"read\")'>Прочитать</button>"
     " <button onclick='adjustPulses(\"up\", \"write\")'>Записать</button>"
     "</div>"
-    "</br>"
-
-    "<h2>Обновление системы</h2>"
+    "<h2>Управление шторой</h2>"
     "<div>"
-    "<label id=\"statusMessage\">Ожидание действий.</label>"
-    "<progress id=\"progressBar\" value=\"0\" max=\"100\"></progress>"
-    "<button id=\"checkFirmwareButton\" style=\"margin-right: 5px;\">Проверить</button>"
-    "<button id=\"updateFirmwareButton\">Запустить</button>"
+    " <button onclick='controlCurtain(\"open\")'>Вверх</button>"
+    " <button onclick='controlCurtain(\"close\")'>Вниз</button>"
+    " <button onclick='controlCurtain(\"stop\")'>Стоп</button>"
     "</div>"
-
-    // Scripts
 
     "<script>"
 
-    "function setEmail() {"
-    "    const email = document.getElementById('email').value;"
-    "    fetch('/setEmail', {"
+    "function setUniqueId() {"
+    "    const uniqueId = document.getElementById('uniqueId').value;"
+    "    fetch('/setUniqueId', {"
     "        method: 'POST',"
     "        headers: { 'Content-Type': 'application/json' },"
-    "        body: JSON.stringify({ email: email })"
+    "        body: JSON.stringify({ id: uniqueId })"
     "    })"
-    "    .then(response => response.text())"
-    "    .then(data => alert(data))"
+    "    .then(response => response.json())"
+    "    .then(data => alert(data.message))"
     "    .catch(error => console.error('Error:', error));"
     "}"
 
@@ -234,6 +121,152 @@ const char *WebServerManager::_htmlForm =
     "  });"
     "}"
 
+    "function controlCurtain(action) {"
+    "    fetch('/controlCurtain', {"
+    "        method: 'POST',"
+    "        headers: { 'Content-Type': 'application/json' },"
+    "        body: JSON.stringify({"
+    "            command: action"
+    "        })"
+    "    })"
+    "    .then(response => response.json())"
+    "    .then(data => alert(data.message))"
+    "    .catch(error => console.error('Error:', error));"
+    "}"
+
+    "</script>"
+
+    "</body>"
+    "</html>";
+
+    // Normal menu
+
+const char *WebServerManager::_htmlForm =
+    "<!DOCTYPE html>"
+    "<html>"
+    "<head>"
+    "<meta charset=\"UTF-8\">"
+    "<title>Home Curtain Configuration Panel</title>"
+
+    "<style>"
+    "body { font-family: Arial, sans-serif; margin: 20px; }"
+    "h1 { color: #333; }"
+    "table { width: 100%; border-collapse: collapse; table-layout: fixed; }"
+    "td { padding: 8px; text-align: left; vertical-align: middle; }"
+    "form { margin-bottom: 20px; }"
+    "input[type='text'], input[type='number'], input[type='password'], input[type='checkbox'], select {"
+    " padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box;"
+    " border: 1px solid #ccc; border-radius: 4px;"
+    "}"
+    "input[type='checkbox'] {"
+    " width: auto;"
+    " margin: 5px 0;"
+    "}"
+    "button {"
+    " background-color: #4CAF50; color: white; padding: 10px 15px; border: none;"
+    " border-radius: 4px; cursor: pointer; font-size: 16px;"\
+    " min-width: 125px;"
+    "}"
+    "button:hover { background-color: #45a049; }"
+    "#statusMessage { margin-top: 15px; font-size: 16px; color: #333; }"
+    "progress { width: 100%; height: 25px; border-radius: 12px; overflow: hidden; background-color: #eee; border: 1px solid #ccc; margin: 5px 0 }"
+    "progress::-webkit-progress-bar { background-color: #eee; border-radius: 12px; }"
+    "progress::-webkit-progress-value { background-color: #4CAF50; border-radius: 12px; }"
+    "progress::-moz-progress-bar { background-color: #4CAF50; border-radius: 12px; }"
+    "</style>"
+
+    "</head>"
+    "<body>"
+    /*"<h1>Конфигурационная панель Римской Шторы</h1>"*/
+
+    "<h2>Настройка WI-FI</h2>"
+    "<form id=\"setWiFiForm\">"
+    " <label for=\"ssid\">Имя сети (SSID):</label>"
+    " <input type=\"text\" id=\"ssid\" name=\"ssid\" placeholder=\"Введите SSID\" required><br>"
+    " <label for=\"password\">Пароль:</label>"
+    " <input type=\"password\" id=\"password\" name=\"password\" placeholder=\"Введите пароль\" required><br>"
+    " <button type=\"button\" onclick=\"setWiFi()\">Настроить</button>"
+    "</form>"
+
+    "<h2>Связывание по email</h2>"
+    "<div>"
+    " <label for='email'>Значение Email:</label>"
+    " <input type='text' id='email' placeholder='Введите email' required><br>"
+    "<button onclick=\"setEmail()\">Отправить</button>"
+    "</div>"
+
+    "<h2>Настройка режима сна</h2>"
+    "<form id=\"sleepForm\" action=\"/setSleepMode\" method=\"post\">"
+    "    <table>"
+    "        <tr>"
+    "            <td><b>Интервал 1.</b></td>"
+    "            <td><input type=\"checkbox\" id=\"enableSleepInterval1\" name=\"enableSleepInterval1\"></td>"
+    "            <td>Начало сна (часы, 0-23):</td>"
+    "            <td><input type=\"number\" id=\"sleepStartHourInterval1\" name=\"sleepStartHourInterval1\" min=\"0\" max=\"23\" required></td>"
+    "            <td>Начало сна (минуты, 0-59):</td>"
+    "            <td><input type=\"number\" id=\"sleepStartMinuteInterval1\" name=\"sleepStartMinuteInterval1\" min=\"0\" max=\"59\" required></td>"
+    "            <td>Длительность сна (часы):</td>"
+    "            <td><input type=\"number\" id=\"sleepDurationInterval1\" name=\"sleepDurationInterval1\" min=\"1\" required></td>"
+    "        </tr>"
+    "        <tr>"
+    "            <td><b>Интервал 2.</b></td>"
+    "            <td><input type=\"checkbox\" id=\"enableSleepInterval2\" name=\"enableSleepInterval2\"></td>"
+    "            <td>Начало сна (часы, 0-23):</td>"
+    "            <td><input type=\"number\" id=\"sleepStartHourInterval2\" name=\"sleepStartHourInterval2\" min=\"0\" max=\"23\" required></td>"
+    "            <td>Начало сна (минуты, 0-59):</td>"
+    "            <td><input type=\"number\" id=\"sleepStartMinuteInterval2\" name=\"sleepStartMinuteInterval2\" min=\"0\" max=\"59\" required></td>"
+    "            <td>Длительность (часы):</td>"
+    "            <td><input type=\"number\" id=\"sleepDurationInterval2\" name=\"sleepDurationInterval2\" min=\"1\" required></td>"
+    "        </tr>"
+    "    </table>"
+    "    <button type=\"button\" onclick=\"configureSleepMode()\">Сохранить</button>"
+    "</form>"
+    "<div>"
+    " <label for='currentTime'>Текущее время:</label>"
+    " <input type='text' id='currentTime' placeholder='Часы и минуты' readonly><br>"
+    "<button type=\"button\" onclick=\"getCurrentTime()\">Прочитать</button>"
+    "</div>"
+
+    "<h2>Обновление системы</h2>"
+    "<div>"
+    "<label id=\"statusMessage\">Ожидание действий.</label>"
+    "<progress id=\"progressBar\" value=\"0\" max=\"100\"></progress>"
+    "<button id=\"checkFirmwareButton\" style=\"margin-right: 5px;\">Проверить</button>"
+    "<button id=\"updateFirmwareButton\">Запустить</button>"
+    "</div>"
+
+    // Scripts
+
+    "<script>"
+
+    "function setWiFi() {"
+    "    const ssid = document.getElementById('ssid').value;"
+    "    const password = document.getElementById('password').value;"
+    "    fetch('/setWiFiParams', {"
+    "        method: 'POST',"
+    "        headers: { 'Content-Type': 'application/json' },"
+    "        body: JSON.stringify({"
+    "            ssid: ssid,"
+    "            password: password "
+    "        })"
+    "    })"
+    "    .then(response => response.json())"
+    "    .then(data => alert(data.message))"
+    "    .catch(error => console.error('Error:', error));"
+    "}"
+
+    "function setEmail() {"
+    "    const email = document.getElementById('email').value;"
+    "    fetch('/setEmail', {"
+    "        method: 'POST',"
+    "        headers: { 'Content-Type': 'application/json' },"
+    "        body: JSON.stringify({ email: email })"
+    "    })"
+    "    .then(response => response.text())"
+    "    .then(data => alert(data))"
+    "    .catch(error => console.error('Error:', error));"
+    "}"
+
     "function getCurrentTime() {"
     "    fetch('/getCurrentTime', {"
     "        method: 'POST',"
@@ -265,7 +298,7 @@ const char *WebServerManager::_htmlForm =
     "    fetch('/startOTA')"
     "        .then(response => {"
     "            if (!response.ok) {"
-    "                throw new Error('Ошибка сети');"
+    "                throw new Error('Ошибка сети.');"
     "            }"
     "            return response.text();"
     "        })"
@@ -275,7 +308,7 @@ const char *WebServerManager::_htmlForm =
     "        })"
     "        .catch(error => {"
     "            console.error('Ошибка:', error);"
-    "            document.getElementById('statusMessage').textContent = 'Ошибка при запросе';"
+    "            document.getElementById('statusMessage').textContent = 'Ошибка при запросе.';"
     "        });"
     "});"
 
@@ -285,7 +318,7 @@ const char *WebServerManager::_htmlForm =
     "        .then(data => {"
     "            document.getElementById('progressBar').value = data.progress;"
     "            document.getElementById('statusMessage').textContent = data.statusMessage;"
-    "            if (data.progress < 100 && data.statusMessage !== 'Прошивка успешно обновлена') {"
+    "            if (data.progress < 100 && data.statusMessage !== 'Прошивка обновлена.') {"
     "                setTimeout(checkOtaProgress, 100);"
     "            }"
     "        })"
@@ -309,6 +342,15 @@ const char *WebServerManager::_htmlForm =
 
     "</body>"
     "</html>";
+
+    // Designed to setup configure
+    void WebServerManager::Initialize()
+    {
+        _setMqttAuthInfoWithInitCallback = nullptr;
+        _nvsMemoryManager->ReadDataFromFlash("login", _login);
+        _nvsMemoryManager->ReadDataFromFlash("password", _password);
+        _deviceId = 0;
+    }
 
     // Designed to set instance
     void WebServerManager::Set(NvsMemoryManager* nvsMemoryManager)
@@ -352,375 +394,22 @@ const char *WebServerManager::_htmlForm =
         return _password;
     }
 
-    // Designed to handle HTTP request
-    esp_err_t WebServerManager::RootHandler(httpd_req_t *req)
+    // Designed to save device id
+    void WebServerManager::SetDeviceId(const int32_t deviceId)
     {
-        httpd_resp_set_type(req, "text/html");
-
-        char query[100];
-        if (httpd_req_get_url_query_str(req, query, sizeof(query)) == ESP_OK) {
-
-            ESP_LOGI(TAG.c_str(), "BUF: %s", query);
-            // Check "page" parameter on exist
-            char page[20];
-            if (httpd_query_key_value(query, "page", page, sizeof(page)) == ESP_OK) {
-                if (strcmp(page, "serviceMenu") == 0) {
-                    // Return service menu
-                    httpd_resp_send(req, _htmlFormServiceMenu, HTTPD_RESP_USE_STRLEN);
-                    return ESP_OK;
-                }
-            }
-        }
-
-        httpd_resp_send(req, _htmlForm, HTTPD_RESP_USE_STRLEN);
-
-        return ESP_OK;
-
+        _deviceId = deviceId;
     }
 
-    // Designed to handle HTTP request
-    esp_err_t WebServerManager::SetWiFiHandler(httpd_req_t *req)
+    // Designed for set current firmware version
+    void WebServerManager::SetCurrentFirmwareVersion(const std::string& currentFirmvareVersion)
     {
-        char buf[100] = {0};
-
-        int ret, remaining = req->content_len;
-
-        while (remaining > 0) {
-
-            ret = httpd_req_recv(req, buf, std::min(static_cast<size_t>(remaining), sizeof(buf)));
-
-
-            ESP_LOGI(TAG.c_str(), "BUF: %s", buf);
-
-            if (ret <= 0) {
-                return ESP_FAIL;
-
-            }
-
-            remaining -= ret;
-
-            char *login_ptr = strstr(buf, "login=");
-
-            char *password_ptr = strstr(buf, "password=");
-
-            if (login_ptr) {
-                sscanf(login_ptr, "login=%49[^&]", _login);
-            }
-
-            if (password_ptr) {
-                sscanf(password_ptr, "password=%49s", _password);
-            }
-        }
-
-        ESP_LOGI(TAG.c_str(), "Login: %s, Password: %s", _login, _password);
-
-        httpd_resp_set_type(req, "text/html");
-
-        httpd_resp_sendstr(req, "<h1>Login and Password was received. The curtain will be rebooted.</h1><a href=\"/\">Back</a>");
-
-        _nvsMemoryManager->WriteDataToFlash("login", _login);
-        _nvsMemoryManager->WriteDataToFlash("password", _password);
-
-        esp_restart();
-
-        return ESP_OK;
+        _currentFirmwareVersion = currentFirmvareVersion;
     }
 
-
-    // Designed to handle HTTP request
-    esp_err_t WebServerManager::CalibrateHandler(httpd_req_t *req)
+    // Designed to set callback
+    void WebServerManager::Set(const std::function<void(const std::string&)>& changeMotorStateCallback)
     {
-        char buf[128] = {0};
-        int ret = httpd_req_recv(req, buf, std::min(req->content_len, sizeof(buf) - 1));
-        if (ret <= 0) {
-            ESP_LOGE(TAG.c_str(), "Failed to receive data");
-            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive data");
-            return ESP_FAIL;
-        }
-
-        buf[ret] = '\0';
-
-        char action[10] = {0}, direction[10] = {0};
-        char value_str[10] = {0};
-        int value = 0;
-
-        if (httpd_query_key_value(buf, "action", action, sizeof(action)) != ESP_OK) {
-            ESP_LOGE(TAG.c_str(), "Missing or invalid 'action'");
-            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid or missing 'action' parameter");
-            return ESP_FAIL;
-        }
-
-        if (httpd_query_key_value(buf, "direction", direction, sizeof(direction)) != ESP_OK) {
-            ESP_LOGE(TAG.c_str(), "Missing or invalid 'direction'");
-            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid or missing 'direction' parameter");
-            return ESP_FAIL;
-        }
-
-        if (httpd_query_key_value(buf, "value", value_str, sizeof(value_str)) == ESP_OK) {
-            value = atoi(value_str);
-        }
-
-        ESP_LOGI(TAG.c_str(), "Received action: %s, direction: %s, value: %d", action, direction, value);
-
-        if (strcmp(action, "read") == 0) {
-            int calibrationValue = _motorController->GetBaseCalibration();
-            char response[32];
-            snprintf(response, sizeof(response), "%d", calibrationValue);
-            httpd_resp_set_type(req, "text/plain");
-            httpd_resp_send(req, response, strlen(response));
-        } else if (strcmp(action, "write") == 0) {
-            if (strcmp(direction, "up") == 0) {
-                _motorController->SetBaseCalibration(value);
-            }
-            httpd_resp_sendstr(req, "Calibration value updated successfully.");
-        } else if (strcmp(action, "save") == 0) {
-            if (strcmp(direction, "up") == 0) {
-                _nvsMemoryManager->WriteDataToFlash("bc", _motorController->GetBaseCalibration());
-            }
-            httpd_resp_sendstr(req, "Calibration value saved successfully.");
-        } else {
-            ESP_LOGE(TAG.c_str(), "Invalid action: %s", action);
-            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid action");
-            return ESP_FAIL;
-        }
-
-        return ESP_OK;
-    }
-
-    // Designed to handle HTTP request
-    esp_err_t WebServerManager::AdjustPulsesHandler(httpd_req_t *req)
-    {
-        char buf[100] = {0};
-        int ret = httpd_req_recv(req, buf, std::min(req->content_len, sizeof(buf) - 1));
-
-        if (ret <= 0) {
-            ESP_LOGE(TAG.c_str(), "Failed to receive data");
-            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive data");
-            return ESP_FAIL;
-        }
-
-        buf[ret] = '\0';
-        ESP_LOGI(TAG.c_str(), "Received data: %s", buf);
-
-        char action[16] = {0};
-        char direction[16] = {0};
-        int value = 0;
-
-        if (sscanf(buf, "action=%15[^&]&direction=%15[^&]&value=%d", action, direction, &value) < 2) {
-            ESP_LOGE(TAG.c_str(), "Invalid parameters");
-            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid parameters");
-            return ESP_FAIL;
-        }
-
-        if (strcmp(action, "read") == 0) {
-            if (strcmp(direction, "up") == 0) {
-                char response[16];
-                snprintf(response, sizeof(response), "%d", _motorController->GetPositionInPulses());
-                ESP_LOGI(TAG.c_str(), "Read pulses up: %d", _motorController->GetPositionInPulses());
-                httpd_resp_sendstr(req, response);
-            } else {
-                ESP_LOGE(TAG.c_str(), "Invalid direction");
-                httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid direction");
-                return ESP_FAIL;
-            }
-        } else if (strcmp(action, "write") == 0) {
-            if (strcmp(direction, "up") == 0) {
-                _motorController->SetPositionInPulses(value);
-                ESP_LOGI(TAG.c_str(), "Updated pulses up: %d", _motorController->GetPositionInPulses());
-                httpd_resp_sendstr(req, "Pulses up updated successfully.");
-            } else {
-                ESP_LOGE(TAG.c_str(), "Invalid direction");
-                httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid direction");
-                return ESP_FAIL;
-            }
-        } else {
-            ESP_LOGE(TAG.c_str(), "Invalid action");
-            httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid action");
-            return ESP_FAIL;
-        }
-
-        return ESP_OK;
-    }
-
-    // Designed to handle HTTP request
-    esp_err_t WebServerManager::SetSleepModeHandler(httpd_req_t *req)
-    {
-        char content[400] = {0};
-        int ret = httpd_req_recv(req, content, sizeof(content) - 1);
-        if (ret <= 0) {
-            ESP_LOGE(TAG.c_str(), "Failed to receive data");
-            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive data");
-            return ESP_FAIL;
-        }
-        content[ret] = '\0';
-
-        std::vector<DeepSleepNtp::StSleepModeParamas> sleepModeParams = {};
-        sleepModeParams.resize(2);
-
-        for (int32_t i = 0; i < sleepModeParams.size(); i++) {
-            char *param;
-            param = strstr(content, ("enableSleepInterval" + std::to_string(i+1) + "=").c_str());
-            if (param) {
-                sleepModeParams.at(i).enableSleep = atoi(param + strlen(("enableSleepInterval" + std::to_string(i+1) + "=").c_str())) > 0;
-            }
-
-            param = strstr(content, ("sleepStartHourInterval" + std::to_string(i+1) + "=").c_str());
-            if (param) {
-                sleepModeParams.at(i).sleepStartHour = atoi(param + strlen(("sleepStartHourInterval" + std::to_string(i+1) + "=").c_str()));
-            }
-
-            param = strstr(content, ("sleepStartMinuteInterval" + std::to_string(i+1) + "=").c_str());
-            if (param) {
-                sleepModeParams.at(i).sleepStartMinute = atoi(param + strlen(("sleepStartMinuteInterval" + std::to_string(i+1) + "=").c_str()));
-            }
-
-            param = strstr(content, ("sleepDurationInterval" + std::to_string(i+1) + "=").c_str());
-            if (param) {
-                sleepModeParams.at(i).sleepDurationHours = atoi(param + strlen(("sleepDurationInterval" + std::to_string(i+1) + "=").c_str()));
-            }
-
-            ESP_LOGI("WebServer", "Interval %d Sleep Mode: %s", i+1, sleepModeParams.at(i).enableSleep ? "ON" : "OFF");
-            ESP_LOGI("WebServer", "Interval %d Sleep Start Hour: %d", i+1, sleepModeParams.at(i).sleepStartHour);
-            ESP_LOGI("WebServer", "Interval %d Sleep Start Minute: %d", i+1, sleepModeParams.at(i).sleepStartMinute);
-            ESP_LOGI("WebServer", "Interval %d Sleep Duration Hour: %d", i+1, sleepModeParams.at(i).sleepDurationHours);
-        }
-
-        _deepSleepNtp->SetSleepModeParams(sleepModeParams);
-
-        httpd_resp_set_type(req, "text/plain");
-        httpd_resp_send(req, "Настройки режима сна сохранены", HTTPD_RESP_USE_STRLEN);
-
-        return ESP_OK;
-    }
-
-    // Designed to handle HTTP request
-    esp_err_t WebServerManager::GetCurrentTimeHandler(httpd_req_t *req)
-    {
-        char response[16];
-        snprintf(response, sizeof(response), "%02d:%02d", _deepSleepNtp->GetCurrentHour(), _deepSleepNtp->GetCurrentMinute());
-        httpd_resp_sendstr(req, response);
-
-        return ESP_OK;
-    }
-
-    // Designed to handle HTTP event callback
-    esp_err_t WebServerManager::ProcessMqttAuthInfo(esp_http_client_event_t *evt)
-    {
-        switch ((int)evt->event_id) {
-            case HTTP_EVENT_ON_DATA: {
-                WebServerManager* self = static_cast<WebServerManager*>(evt->user_data);
-                if (self) {
-                    return self->SetMqttAuthInfo((char *)evt->data, evt->data_len);
-                }
-            }    break;
-            default:
-                break;
-        }
-        return ESP_OK;
-    }
-
-    // Designed to set JSON MQTT authenticate information
-    esp_err_t WebServerManager::SetMqttAuthInfo(const char* data, const uint32_t length)
-    {
-        _mqttAuthData.append(data, length);
-        return ESP_OK;
-    }
-
-    // Designed to handle HTTP request
-    esp_err_t WebServerManager::SetEmailHandler(httpd_req_t *req)
-    {
-        char content[100] = {0};
-        int ret = httpd_req_recv(req, content, sizeof(content) - 1);
-        if (ret <= 0) {
-            ESP_LOGE(TAG.c_str(), "Failed to receive data");
-            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive data");
-            return ESP_FAIL;
-        }
-        content[ret] = '\0';
-
-        // Configuration HTTP-client
-        esp_http_client_config_t config = {};
-        config.url = SERVER_URL;
-        config.method = HTTP_METHOD_POST;
-        config.cert_pem = (const char *)YANDEX_ROOT_CA.c_str();
-        config.timeout_ms = 5000;
-        config.event_handler = ProcessMqttAuthInfo;
-        config.user_data = this;
-
-        // Initializing the HTTP Client
-        esp_http_client_handle_t client = esp_http_client_init(&config);
-
-        // Setting the Content-Type header
-        esp_http_client_set_header(client, "Content-Type", "application/json");
-
-        std::string jsonRequest = "[" + std::string(content) + ", {\"device_id\":\"" + std::to_string(_deviceId) + "\"}]";
-
-        _mqttAuthData.clear();
-
-        // Set the request body
-        esp_http_client_set_post_field(client, jsonRequest.c_str(), strlen(jsonRequest.c_str()));
-
-        // Execute the request
-        esp_err_t err = esp_http_client_perform(client);
-        char message[128];
-
-        ESP_LOGI(TAG.c_str(), "%s", _mqttAuthData.c_str());
-
-        cJSON *root = cJSON_Parse(_mqttAuthData.c_str());
-        if (root == NULL) {
-            ESP_LOGE(TAG.c_str(), "Failed to JSON parse");
-            esp_http_client_cleanup(client);
-            cJSON_Delete(root);
-            httpd_resp_send(req, "HTTP POST request failed.", HTTPD_RESP_USE_STRLEN);
-            return ESP_FAIL;
-        }
-
-        // Extract firmware version or error
-        cJSON *mqttLogin = cJSON_GetObjectItem(root, "MqttLogin");
-        cJSON *mqttPassword = cJSON_GetObjectItem(root, "MqttPassword");
-
-        if (mqttLogin == NULL || mqttPassword == NULL) {
-            ESP_LOGE(TAG.c_str(), "Failed to JSON parse");
-            esp_http_client_cleanup(client);
-            cJSON_Delete(root);
-            httpd_resp_send(req, "HTTP POST request failed.", HTTPD_RESP_USE_STRLEN);
-            return ESP_FAIL;
-        }
-
-        ESP_LOGI(TAG.c_str(), "MqttLogin=%s, MqttPassword=%s", mqttLogin->valuestring, mqttPassword->valuestring);
-
-        // Call only once with initialization MQTT
-        _nvsMemoryManager->WriteDataToFlash("MqttLog", mqttLogin->valuestring);
-        _nvsMemoryManager->WriteDataToFlash("MqttPwd", mqttPassword->valuestring);
-        std::string mqttLoginString = std::string(mqttLogin->valuestring);
-        std::string mqttPasswordString = std::string(mqttPassword->valuestring);
-        _setMqttAuthInfoWithInitCallback(mqttLoginString, mqttPasswordString);
-
-        if (err == ESP_OK) {
-            snprintf(message, sizeof(message), "HTTP POST Status = %d", esp_http_client_get_status_code(client));
-            ESP_LOGI(TAG.c_str(), "%s", message);
-        } else {
-            snprintf(message, sizeof(message), "HTTP POST request failed: %s", esp_err_to_name(err));
-            ESP_LOGI(TAG.c_str(), "%s", message);
-        }
-
-        // Freeing up resources
-        esp_http_client_cleanup(client);
-        cJSON_Delete(root);
-
-        // Send message to client
-        httpd_resp_send(req, message, HTTPD_RESP_USE_STRLEN);
-
-        return ESP_OK;
-    }
-
-    // Designed to setup configure
-    void WebServerManager::Initialize()
-    {
-        _setMqttAuthInfoWithInitCallback = nullptr;
-        _nvsMemoryManager->ReadDataFromFlash("login", _login);
-        _nvsMemoryManager->ReadDataFromFlash("password", _password);
-        _deviceId = 0;
+        _changeMotorStateCallback = changeMotorStateCallback;
     }
 
     // Designed to run HTTP server
@@ -741,7 +430,7 @@ const char *WebServerManager::_htmlForm =
             httpd_register_uri_handler(server, &root);
 
             httpd_uri_t setWiFiUri = {
-                .uri = "/submit",
+                .uri = "/setWiFiParams",
                 .method = HTTP_POST,
                 .handler = StaticSetWiFiHandler,
                 .user_ctx = this
@@ -825,26 +514,48 @@ const char *WebServerManager::_htmlForm =
                 .user_ctx = this
             };
             httpd_register_uri_handler(server, &setUniqueIdUri);
+
+            httpd_uri_t controlCurtainUri = {
+                .uri = "/controlCurtain",
+                .method = HTTP_POST,
+                .handler = StaticControlCurtainHandler,
+                .user_ctx = this
+            };
+            httpd_register_uri_handler(server, &controlCurtainUri);
         }
 
         return server;
     }
 
-    // Designed to handle HTTP request with wrap in static method
-    esp_err_t WebServerManager::StaticSetUniqueIdHandler(httpd_req_t* req)
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::RootHandler(httpd_req_t *req)
     {
-        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
-        if (self) {
-            return self->SetUniqueIdHandler(req);
+        httpd_resp_set_type(req, "text/html");
+
+        char query[100];
+        if (httpd_req_get_url_query_str(req, query, sizeof(query)) == ESP_OK) {
+
+            char page[20];
+            if (httpd_query_key_value(query, "page", page, sizeof(page)) == ESP_OK) {
+                if (strcmp(page, "serviceMenu") == 0) {
+                    // Return service menu
+                    httpd_resp_send(req, _htmlFormServiceMenu, HTTPD_RESP_USE_STRLEN);
+                    return ESP_OK;
+                }
+            }
         }
-        return ESP_FAIL;
+
+        httpd_resp_send(req, _htmlForm, HTTPD_RESP_USE_STRLEN);
+
+        return ESP_OK;
+
     }
 
     // Designed to handle HTTP request
-    esp_err_t WebServerManager::SetUniqueIdHandler(httpd_req_t* req)
+    esp_err_t WebServerManager::SetWiFiHandler(httpd_req_t *req)
     {
-        char buffer[128];
-        int ret = httpd_req_recv(req, buffer, sizeof(buffer) - 1);
+        char buffer[256];
+        int32_t ret = httpd_req_recv(req, buffer, sizeof(buffer) - 1);
         if (ret <= 0) {
             httpd_resp_send_500(req);
             return ESP_FAIL;
@@ -858,41 +569,368 @@ const char *WebServerManager::_htmlForm =
             return ESP_FAIL;
         }
 
-        // Extract UniqieId
-        cJSON *id = cJSON_GetObjectItem(root, "id");
-        if (id == NULL) {
+        // Extract parameters
+        cJSON *ssid = cJSON_GetObjectItem(root, "ssid");
+        cJSON *password = cJSON_GetObjectItem(root, "password");
+
+        if (!cJSON_IsString(ssid) || !cJSON_IsString(password)) {
             cJSON_Delete(root);
             httpd_resp_send_500(req);
             return ESP_FAIL;
         }
 
-        ESP_LOGI(TAG.c_str(), "Получен ID: %s", id->valuestring);
-        _deviceId = std::stoi(id->valuestring);
-        _nvsMemoryManager->WriteDataToFlash("UniqueId", _deviceId);
+        ESP_LOGI(TAG.c_str(), "Received parameters Wi-Fi: SSID=%s, Password=%s", ssid->valuestring, password->valuestring);
 
-        // Send response
+        _nvsMemoryManager->WriteDataToFlash("login", ssid->valuestring);
+        _nvsMemoryManager->WriteDataToFlash("password", password->valuestring);
+
+        // Send resonse
         cJSON *response = cJSON_CreateObject();
-        cJSON_AddStringToObject(response, "status", "success");
-        cJSON_AddStringToObject(response, "message", "Unique Id принят");
-        const char *response_str = cJSON_Print(response);
+        cJSON_AddStringToObject(response, "message", "Параметры Wi-Fi сохранены. Устройство будет автоматически презагружено.");
+        const char *responseString = cJSON_Print(response);
 
-        httpd_resp_set_type(req, "application/json");
-        httpd_resp_send(req, response_str, HTTPD_RESP_USE_STRLEN);
+        httpd_resp_send(req, responseString, HTTPD_RESP_USE_STRLEN);
 
         cJSON_Delete(root);
         cJSON_Delete(response);
 
+        vTaskDelay(1000);
+
+        esp_restart();
+
         return ESP_OK;
     }
 
-    // Designed to handle HTTP request with wrap in static method
-    esp_err_t WebServerManager::StaticCheckFirmwareHandler(httpd_req_t* req)
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::CalibrateHandler(httpd_req_t *req)
     {
-        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
-        if (self) {
-            return self->CheckFirmwareHandler(req);
+        char buf[128] = {0};
+        int32_t ret = httpd_req_recv(req, buf, std::min(req->content_len, sizeof(buf) - 1));
+        if (ret <= 0) {
+            ESP_LOGE(TAG.c_str(), "Failed to receive data");
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
         }
-        return ESP_FAIL;
+
+        buf[ret] = '\0';
+
+        char action[10] = {0}, direction[10] = {0};
+        char value_str[10] = {0};
+        int32_t value = 0;
+
+        if (httpd_query_key_value(buf, "action", action, sizeof(action)) != ESP_OK) {
+            ESP_LOGE(TAG.c_str(), "Missing or invalid 'action'");
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        if (httpd_query_key_value(buf, "direction", direction, sizeof(direction)) != ESP_OK) {
+            ESP_LOGE(TAG.c_str(), "Missing or invalid 'direction'");
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        if (httpd_query_key_value(buf, "value", value_str, sizeof(value_str)) == ESP_OK) {
+            value = atoi(value_str);
+        }
+
+        ESP_LOGI(TAG.c_str(), "Received action: %s, direction: %s, value: %d", action, direction, value);
+
+        if (strcmp(action, "read") == 0) {
+            int32_t calibrationValue = _motorController->GetBaseCalibration();
+            char response[32];
+            snprintf(response, sizeof(response), "%d", calibrationValue);
+            httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+        } else if (strcmp(action, "write") == 0) {
+            if (strcmp(direction, "up") == 0) {
+                _motorController->SetBaseCalibration(value);
+            }
+            httpd_resp_send(req, "Калибровочное значение обновлено.", HTTPD_RESP_USE_STRLEN);
+        } else if (strcmp(action, "save") == 0) {
+            if (strcmp(direction, "up") == 0) {
+                _nvsMemoryManager->WriteDataToFlash("bc", _motorController->GetBaseCalibration());
+            }
+            httpd_resp_send(req, "Калибровочное значение сохранено.", HTTPD_RESP_USE_STRLEN);
+        } else {
+            ESP_LOGE(TAG.c_str(), "Invalid action: %s", action);
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        return ESP_OK;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::AdjustPulsesHandler(httpd_req_t *req)
+    {
+        char buf[100] = {0};
+        int32_t ret = httpd_req_recv(req, buf, std::min(req->content_len, sizeof(buf) - 1));
+
+        if (ret <= 0) {
+            ESP_LOGE(TAG.c_str(), "Failed to receive data");
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        buf[ret] = '\0';
+        ESP_LOGI(TAG.c_str(), "Received data: %s", buf);
+
+        char action[16] = {0};
+        char direction[16] = {0};
+        int32_t value = 0;
+
+        if (sscanf(buf, "action=%15[^&]&direction=%15[^&]&value=%d", action, direction, &value) < 2) {
+            ESP_LOGE(TAG.c_str(), "Invalid parameters");
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        if (strcmp(action, "read") == 0) {
+            if (strcmp(direction, "up") == 0) {
+                char response[16];
+                snprintf(response, sizeof(response), "%d", _motorController->GetPositionInPulses());
+                ESP_LOGI(TAG.c_str(), "Read pulses up: %d", _motorController->GetPositionInPulses());
+                httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+            } else {
+                ESP_LOGE(TAG.c_str(), "Invalid direction");
+                httpd_resp_send_500(req);
+                return ESP_FAIL;
+            }
+        } else if (strcmp(action, "write") == 0) {
+            if (strcmp(direction, "up") == 0) {
+                _motorController->SetPositionInPulses(value);
+                ESP_LOGI(TAG.c_str(), "Updated pulses up: %d", _motorController->GetPositionInPulses());
+                httpd_resp_send(req, "Текущее значение импульсов обновлено.", HTTPD_RESP_USE_STRLEN);
+            } else {
+                ESP_LOGE(TAG.c_str(), "Invalid direction");
+                httpd_resp_send_500(req);
+                return ESP_FAIL;
+            }
+        } else {
+            ESP_LOGE(TAG.c_str(), "Invalid action");
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        return ESP_OK;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::SetSleepModeHandler(httpd_req_t *req)
+    {
+        char content[400] = {0};
+        int32_t ret = httpd_req_recv(req, content, sizeof(content) - 1);
+        if (ret <= 0) {
+            ESP_LOGE(TAG.c_str(), "Failed to receive data");
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+        content[ret] = '\0';
+
+        std::vector<DeepSleepNtp::StSleepModeParamas> sleepModeParams = {};
+        sleepModeParams.resize(2);
+
+        for (int32_t i = 0; i < sleepModeParams.size(); i++) {
+            char *param;
+            param = strstr(content, ("enableSleepInterval" + std::to_string(i+1) + "=").c_str());
+            if (param) {
+                sleepModeParams.at(i).enableSleep = atoi(param + strlen(("enableSleepInterval" + std::to_string(i+1) + "=").c_str())) > 0;
+            }
+
+            param = strstr(content, ("sleepStartHourInterval" + std::to_string(i+1) + "=").c_str());
+            if (param) {
+                sleepModeParams.at(i).sleepStartHour = atoi(param + strlen(("sleepStartHourInterval" + std::to_string(i+1) + "=").c_str()));
+            }
+
+            param = strstr(content, ("sleepStartMinuteInterval" + std::to_string(i+1) + "=").c_str());
+            if (param) {
+                sleepModeParams.at(i).sleepStartMinute = atoi(param + strlen(("sleepStartMinuteInterval" + std::to_string(i+1) + "=").c_str()));
+            }
+
+            param = strstr(content, ("sleepDurationInterval" + std::to_string(i+1) + "=").c_str());
+            if (param) {
+                sleepModeParams.at(i).sleepDurationHours = atoi(param + strlen(("sleepDurationInterval" + std::to_string(i+1) + "=").c_str()));
+            }
+
+            ESP_LOGI("WebServer", "Interval %d Sleep Mode: %s", i+1, sleepModeParams.at(i).enableSleep ? "ON" : "OFF");
+            ESP_LOGI("WebServer", "Interval %d Sleep Start Hour: %d", i+1, sleepModeParams.at(i).sleepStartHour);
+            ESP_LOGI("WebServer", "Interval %d Sleep Start Minute: %d", i+1, sleepModeParams.at(i).sleepStartMinute);
+            ESP_LOGI("WebServer", "Interval %d Sleep Duration Hour: %d", i+1, sleepModeParams.at(i).sleepDurationHours);
+        }
+
+        _deepSleepNtp->SetSleepModeParams(sleepModeParams);
+
+        httpd_resp_send(req, "Настройки режима сна сохранены.", HTTPD_RESP_USE_STRLEN);
+
+        return ESP_OK;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::GetCurrentTimeHandler(httpd_req_t *req)
+    {
+        char response[16];
+        snprintf(response, sizeof(response), "%02d:%02d", _deepSleepNtp->GetCurrentHour(), _deepSleepNtp->GetCurrentMinute());
+        httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+
+        return ESP_OK;
+    }
+
+    // Designed to handle HTTP event callback
+    esp_err_t WebServerManager::ProcessMqttAuthInfo(esp_http_client_event_t *evt)
+    {
+        switch ((int32_t)evt->event_id) {
+            case HTTP_EVENT_ON_DATA: {
+                WebServerManager* self = static_cast<WebServerManager*>(evt->user_data);
+                if (self) {
+                    return self->SetMqttAuthInfo((char *)evt->data, evt->data_len);
+                }
+            }    break;
+            default:
+                break;
+        }
+        return ESP_OK;
+    }
+
+    // Designed to set JSON MQTT authenticate information
+    esp_err_t WebServerManager::SetMqttAuthInfo(const char* data, const uint32_t length)
+    {
+        _mqttAuthData.append(data, length);
+        return ESP_OK;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::SetEmailHandler(httpd_req_t *req)
+    {
+        char content[100] = {0};
+        int32_t ret = httpd_req_recv(req, content, sizeof(content) - 1);
+        if (ret <= 0) {
+            ESP_LOGE(TAG.c_str(), "Failed to receive data");
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+        content[ret] = '\0';
+
+        // Configuration HTTP-client
+        esp_http_client_config_t config = {};
+        config.url = SERVER_URL;
+        config.method = HTTP_METHOD_POST;
+        config.cert_pem = (const char *)YANDEX_ROOT_CA.c_str();
+        config.timeout_ms = 5000;
+        config.event_handler = ProcessMqttAuthInfo;
+        config.user_data = this;
+
+        // Initializing the HTTP Client
+        esp_http_client_handle_t client = esp_http_client_init(&config);
+
+        // Setting the Content-Type header
+        esp_http_client_set_header(client, "Content-Type", "application/json");
+
+        std::string jsonRequest = "[" + std::string(content) + ", {\"device_id\":\"" + std::to_string(_deviceId) + "\"}]";
+
+        _mqttAuthData.clear();
+
+        // Set the request body
+        esp_http_client_set_post_field(client, jsonRequest.c_str(), strlen(jsonRequest.c_str()));
+
+        // Execute the request
+        esp_err_t err = esp_http_client_perform(client);
+        char message[128];
+
+        ESP_LOGI(TAG.c_str(), "%s", _mqttAuthData.c_str());
+
+        cJSON *root = cJSON_Parse(_mqttAuthData.c_str());
+        if (root == NULL) {
+            ESP_LOGE(TAG.c_str(), "Failed to JSON parse");
+            esp_http_client_cleanup(client);
+            cJSON_Delete(root);
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        // Extract firmware version or error
+        cJSON *mqttLogin = cJSON_GetObjectItem(root, "MqttLogin");
+        cJSON *mqttPassword = cJSON_GetObjectItem(root, "MqttPassword");
+
+        if (mqttLogin == NULL || mqttPassword == NULL) {
+            ESP_LOGE(TAG.c_str(), "Failed to JSON parse");
+            esp_http_client_cleanup(client);
+            cJSON_Delete(root);
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        ESP_LOGI(TAG.c_str(), "MqttLogin=%s, MqttPassword=%s", mqttLogin->valuestring, mqttPassword->valuestring);
+
+        // Call only once with initialization MQTT
+        _nvsMemoryManager->WriteDataToFlash("MqttLog", mqttLogin->valuestring);
+        _nvsMemoryManager->WriteDataToFlash("MqttPwd", mqttPassword->valuestring);
+        std::string mqttLoginString = std::string(mqttLogin->valuestring);
+        std::string mqttPasswordString = std::string(mqttPassword->valuestring);
+        _setMqttAuthInfoWithInitCallback(mqttLoginString, mqttPasswordString);
+
+        if (err == ESP_OK) {
+            static const std::map<int32_t, const char*> http_status_messages = {
+                {200, "Данные получены сервером"},
+                {201, "Сервер создал новый ресурс"},
+                {202, "Запрос принят на обработку"},
+                {204, "Нет содержимого для возврата"}
+            };
+
+            int32_t httpStatus = esp_http_client_get_status_code(client);
+            auto it = http_status_messages.find(httpStatus);
+            const char* statusMsg = (it != http_status_messages.end())
+                ? it->second
+                : "Код ответа сервера";
+
+            snprintf(message, sizeof(message), "%s (HTTP %d).", statusMsg, httpStatus);
+            ESP_LOGI(TAG.c_str(), "Статус: %s.", message);
+        } else {
+            static const std::map<esp_err_t, const char*> error_messages = {
+                {ESP_ERR_HTTP_BASE,        "Базовая HTTP-ошибка"},
+                {ESP_ERR_HTTP_CONNECT,     "Ошибка подключения"},
+                {ESP_ERR_HTTP_CONNECTION_CLOSED, "Соединение закрыто"}
+            };
+
+            auto it = error_messages.find(err);
+            const char* errordDesc = (it != error_messages.end())
+                ? it->second
+                : "Неизвестная ошибка";
+
+            snprintf(message, sizeof(message), "%s (%s 0x%x).",
+                     errordDesc, esp_err_to_name(err), err);
+            ESP_LOGE(TAG.c_str(), "Ошибка: %s.", message);
+        }
+
+        // Freeing up resources
+        esp_http_client_cleanup(client);
+        cJSON_Delete(root);
+
+        // Send message to client
+        httpd_resp_send(req, message, HTTPD_RESP_USE_STRLEN);
+
+        return ESP_OK;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::StartOtaHandler(httpd_req_t *req)
+    {
+        httpd_resp_send(req, "OTA начата. Подготовка к загрузке...", HTTPD_RESP_USE_STRLEN);
+        _otaUpdater->OtaUpdate();
+
+        return ESP_OK;
+    }
+
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::GetOtaProgressHandler(httpd_req_t *req)
+    {
+        cJSON *root = cJSON_CreateObject();
+        cJSON_AddNumberToObject(root, "progress", _otaUpdater->GetOtaProgress());
+        cJSON_AddStringToObject(root, "statusMessage", _otaUpdater->GetOtaStatusMessage().c_str());
+        const char *response = cJSON_Print(root);
+        httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+        cJSON_Delete(root);
+
+        return ESP_OK;
     }
 
     // Designed for send HTTP response with message
@@ -902,7 +940,6 @@ const char *WebServerManager::_htmlForm =
         cJSON_AddStringToObject(root, "statusMessage", message.c_str());
 
         const char *response = cJSON_Print(root);
-        httpd_resp_set_type(req, "application/json");
         httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
 
         cJSON_Delete(root);
@@ -913,7 +950,7 @@ const char *WebServerManager::_htmlForm =
     // Designed to handle HTTP event callback
     esp_err_t WebServerManager::ProcessJsonFirmwareVersion(esp_http_client_event_t *evt)
     {
-        switch ((int)evt->event_id) {
+        switch ((int32_t)evt->event_id) {
             case HTTP_EVENT_ON_DATA: {
                 WebServerManager* self = static_cast<WebServerManager*>(evt->user_data);
                 if (self) {
@@ -982,8 +1019,6 @@ const char *WebServerManager::_htmlForm =
         cJSON *serverFirmwareVersionJson = cJSON_GetObjectItem(root, "version");
         cJSON *error = cJSON_GetObjectItem(root, "error");
 
-        ESP_LOGI("TAG", "Curr=%s, New=%s", _currentFirmwareVersion.c_str(), std::string(serverFirmwareVersionJson->valuestring).c_str());
-
         if (serverFirmwareVersionJson) {
             statusMessage = CompareFirmwareVersions(_currentFirmwareVersion, std::string(serverFirmwareVersionJson->valuestring));
         } else if (error) {
@@ -998,56 +1033,106 @@ const char *WebServerManager::_htmlForm =
         return SendHttpResponseWithMessage(req, statusMessage);
     }
 
-    // Designed to handle HTTP request with wrap in static method
-    esp_err_t WebServerManager::StaticGetOtaProgressHandler(httpd_req_t* req)
-    {
-        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
-        if (self) {
-            return self->GetOtaProgressHandler(req);
-        }
-        return ESP_FAIL;
-    }
-
     // Designed to handle HTTP request
-    esp_err_t WebServerManager::GetOtaProgressHandler(httpd_req_t *req)
+    esp_err_t WebServerManager::SetUniqueIdHandler(httpd_req_t* req)
     {
-        cJSON *root = cJSON_CreateObject();
-       cJSON_AddNumberToObject(root, "progress", _otaUpdater->GetOtaProgress());
-       cJSON_AddStringToObject(root, "statusMessage", _otaUpdater->GetOtaStatusMessage().c_str());
-       const char *response = cJSON_Print(root);
-       httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
-       cJSON_Delete(root);
-
-       return ESP_OK;
-    }
-
-    // Designed to handle HTTP request with wrap in static method
-    esp_err_t WebServerManager::StaticStartOtaHandler(httpd_req_t* req)
-    {
-        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
-        if (self) {
-            return self->StartOtaHandler(req);
+        char buffer[128];
+        int32_t ret = httpd_req_recv(req, buffer, sizeof(buffer) - 1);
+        if (ret <= 0) {
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
         }
-        return ESP_FAIL;
-    }
+        buffer[ret] = '\0';
 
-    // Designed to handle HTTP request
-    esp_err_t WebServerManager::StartOtaHandler(httpd_req_t *req)
-    {
-        httpd_resp_send(req, "OTA начата. Подготовка к загрузке...", HTTPD_RESP_USE_STRLEN);
-        _otaUpdater->OtaUpdate();
+        // Parse JSON
+        cJSON *root = cJSON_Parse(buffer);
+        if (root == NULL) {
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        // Extract UniqieId
+        cJSON *id = cJSON_GetObjectItem(root, "id");
+        if (id == NULL || strlen(id->valuestring) <= 0) {
+            cJSON_Delete(root);
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        ESP_LOGI(TAG.c_str(), "Received  ID: %s", id->valuestring);
+        _deviceId = std::stoi(id->valuestring);
+        _nvsMemoryManager->WriteDataToFlash("UniqueId", _deviceId);
+
+        // Send response
+        cJSON *response = cJSON_CreateObject();
+        cJSON_AddStringToObject(response, "message", "Уникальный идентификатор сохранен.");
+        const char *response_str = cJSON_Print(response);
+
+        httpd_resp_send(req, response_str, HTTPD_RESP_USE_STRLEN);
+
+        cJSON_Delete(root);
+        cJSON_Delete(response);
 
         return ESP_OK;
     }
 
-    // Designed to handle HTTP request with wrap in static method
-    esp_err_t WebServerManager::StaticSetEmailHandler(httpd_req_t* req)
+    // Designed to handle HTTP request
+    esp_err_t WebServerManager::ControlCurtainHandler(httpd_req_t* req)
     {
-        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
-        if (self) {
-            return self->SetEmailHandler(req);
+        char buffer[64];
+        int ret = httpd_req_recv(req, buffer, sizeof(buffer) - 1);
+        if (ret <= 0) {
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
         }
-        return ESP_FAIL;
+        buffer[ret] = '\0';
+
+        // Parse JSON
+        cJSON *root = cJSON_Parse(buffer);
+        if (root == NULL) {
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        // Extract command
+        cJSON *command = cJSON_GetObjectItem(root, "command");
+        if (!cJSON_IsString(command)) {
+            cJSON_Delete(root);
+            httpd_resp_send_500(req);
+            return ESP_FAIL;
+        }
+
+        const char* cmd = command->valuestring;
+        ESP_LOGI(TAG.c_str(), "Curtain control command received: %s.", cmd);
+
+        // Command processing
+        static const std::unordered_map<std::string, std::string> command_map = {
+            {"open",  "Открыть"},
+            {"close", "Закрыть"},
+            {"stop",  "Стоп"}
+        };
+
+        // Sending a reply
+        cJSON *response = cJSON_CreateObject();
+        auto it = command_map.find(cmd);
+        if (it != command_map.end()) {
+            // Executing a command
+            _changeMotorStateCallback(cmd);
+            cJSON_AddStringToObject(response, "status", "success");
+            cJSON_AddStringToObject(response, "message", ("Команда '" + it->second + "' выполнена.").c_str());
+        } else {
+            cJSON_AddStringToObject(response, "status", "error");
+            cJSON_AddStringToObject(response, "message", "Ошибка. Неизвестная команда.");
+        }
+
+        const char *response_str = cJSON_Print(response);
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, response_str, HTTPD_RESP_USE_STRLEN);
+
+        cJSON_Delete(root);
+        cJSON_Delete(response);
+
+        return ESP_OK;
     }
 
     // Designed to handle HTTP request with wrap in static method
@@ -1109,16 +1194,64 @@ const char *WebServerManager::_htmlForm =
         return ESP_FAIL;
     }
 
-    // Designed to save device id
-    void WebServerManager::SetDeviceId(const int32_t deviceId)
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticSetEmailHandler(httpd_req_t* req)
     {
-        _deviceId = deviceId;
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->SetEmailHandler(req);
+        }
+        return ESP_FAIL;
     }
 
-    // Designed for set current firmware version
-    void WebServerManager::SetCurrentFirmwareVersion(const std::string& currentFirmvareVersion)
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticStartOtaHandler(httpd_req_t* req)
     {
-        _currentFirmwareVersion = currentFirmvareVersion;
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->StartOtaHandler(req);
+        }
+        return ESP_FAIL;
+    }
+
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticGetOtaProgressHandler(httpd_req_t* req)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->GetOtaProgressHandler(req);
+        }
+        return ESP_FAIL;
+    }
+
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticCheckFirmwareHandler(httpd_req_t* req)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->CheckFirmwareHandler(req);
+        }
+        return ESP_FAIL;
+    }
+
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticSetUniqueIdHandler(httpd_req_t* req)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->SetUniqueIdHandler(req);
+        }
+        return ESP_FAIL;
+    }
+
+    // Designed to handle HTTP request with wrap in static method
+    esp_err_t WebServerManager::StaticControlCurtainHandler(httpd_req_t* req)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(req->user_ctx);
+        if (self) {
+            return self->ControlCurtainHandler(req);
+        }
+        return ESP_FAIL;
     }
 
     // Designed for the compare firmware versions
@@ -1133,11 +1266,11 @@ const char *WebServerManager::_htmlForm =
         }
 
         // Convert major and minor to numbers
-        int currentMajor = std::stoi(currentVersion.substr(0, currentDot));
-        int currentMinor = std::stoi(currentVersion.substr(currentDot + 1));
+        int32_t currentMajor = std::stoi(currentVersion.substr(0, currentDot));
+        int32_t currentMinor = std::stoi(currentVersion.substr(currentDot + 1));
 
-        int serverMajor = std::stoi(serverVersion.substr(0, serverDot));
-        int serverMinor = std::stoi(serverVersion.substr(serverDot + 1));
+        int32_t serverMajor = std::stoi(serverVersion.substr(0, serverDot));
+        int32_t serverMinor = std::stoi(serverVersion.substr(serverDot + 1));
 
         // Compare versions
         if (serverMajor > currentMajor || (serverMajor == currentMajor && serverMinor > currentMinor)) {

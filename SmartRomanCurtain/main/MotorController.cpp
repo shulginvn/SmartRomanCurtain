@@ -210,8 +210,8 @@ namespace SmartRomanCurtain
 
                 lastTime = now;
 
-                ESP_LOGI(TAG.c_str(), "Signal receive on GPIO pulseCounter=%llu, Occ=%d, motorPosition=%g, baseCalibration=%d, workMode=%d, ratio=%g\n",
-                       _pulseCounter, _openCloseCounter, _motorPosition, _baseCalibration, _workMode, _ratio != nullptr ? *_ratio : 0.0);
+                ESP_LOGI(TAG.c_str(), "Signal receive on GPIO pulseCounter=%llu, Occ=%d, motorPosition=%g, baseCalibration=%d, workMode=%d, ratio=%g, motorState=%d\n",
+                       _pulseCounter, _openCloseCounter, _motorPosition, _baseCalibration, _workMode, _ratio != nullptr ? *_ratio : 0.0, _motorState);
             }
 
             vTaskDelay(pdMS_TO_TICKS(1));
@@ -319,7 +319,6 @@ namespace SmartRomanCurtain
     // Designed to set position in pulses
     void MotorController::SetPositionInPulses(const int32_t pulses)
     {
-        SendMotorCommand(EnMotorCommand::STOP);
         portENTER_CRITICAL(&_motorMutex);
         _motorPosition = 1.0f * pulses / _baseCalibration;
         portEXIT_CRITICAL(&_motorMutex);
