@@ -341,6 +341,10 @@ namespace SmartRomanCurtain
         } else if (motorState == "stop") {
             SendMotorCommand(EnMotorCommand::STOP);
         }
+
+        _motorOnOff = (motorState == "open");
+        _targetPosition = _motorOnOff ? 100 : 0;
+
         portEXIT_CRITICAL(&_motorMutex);
     }
 
@@ -356,6 +360,9 @@ namespace SmartRomanCurtain
             SendMotorCommand(EnMotorCommand::CLOSE);
         }
 
+        _targetPosition = range;
+        _motorOnOff = !(range == 0);
+
         portEXIT_CRITICAL(&_motorMutex);
     }
 
@@ -363,5 +370,11 @@ namespace SmartRomanCurtain
     void MotorController::SendMotorCommand(const EnMotorCommand& motorCommand)
     {
         xQueueSend(_motorCommandQueue, &motorCommand, 0);
+    }
+
+    // Designed to get motor state and range values
+    std::pair<bool, int32_t> MotorController::GetMotorOnOffAndRange()
+    {
+        return std::make_pair(_motorOnOff, _targetPosition);
     }
 }

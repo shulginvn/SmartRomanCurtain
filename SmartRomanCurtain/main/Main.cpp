@@ -10,7 +10,7 @@
 
 namespace SmartRomanCurtain
 {
-    std::string CURRENT_FIRMWARE_VERSION = "1.01";
+    std::string CURRENT_FIRMWARE_VERSION = "1.02";
 
     WebServerManager _webServerManager;
     NvsMemoryManager _nvsMemoryManager;
@@ -43,6 +43,7 @@ namespace SmartRomanCurtain
         _deepSleepNtp.Set(&_nvsMemoryManager);
         _yandexDialogController.Set([&](const std::string& motorState) { _motorController.HandleMotorStateChanged(motorState); });
         _yandexDialogController.Set([&](const std::uint32_t range) { _motorController.HandleMotorRangeChanged(range); });
+        _yandexDialogController.Set([&]() -> std::pair<bool, int32_t> { return _motorController.GetMotorOnOffAndRange(); });
         _webServerManager.Set([&](const std::string& motorState) { _motorController.HandleMotorStateChanged(motorState); });
 
         esp_netif_init();

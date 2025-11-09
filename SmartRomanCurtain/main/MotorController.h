@@ -52,6 +52,9 @@ namespace SmartRomanCurtain
             // Designed to set position in pulses
             int32_t GetPositionInPulses();
 
+            // Designed to get motor state and range values
+            std::pair<bool, int32_t> GetMotorOnOffAndRange();
+
         private:
 
             enum class EnMotorState
@@ -79,9 +82,9 @@ namespace SmartRomanCurtain
             xQueueHandle _gpioEvtQueue = NULL;
 
             const std::string TAG = "MOTOR_CONTROLLER";
-            const gpio_num_t FORWARD_REVERSE_CONTROL_GPIO = GPIO_NUM_0; // GPIO_NUM_3
-            const gpio_num_t PWMA_GPIO =  GPIO_NUM_1; // GPIO_NUM_4
-            const gpio_num_t HALL_SENSOR_PIN = GPIO_NUM_2; // GPIO_NUM_2
+            const gpio_num_t FORWARD_REVERSE_CONTROL_GPIO = GPIO_NUM_2; // GPIO_NUM_2 XIAO
+            const gpio_num_t PWMA_GPIO =  GPIO_NUM_3; // GPIO_NUM_3
+            const gpio_num_t HALL_SENSOR_PIN = GPIO_NUM_4; // GPIO_NUM_4
             //const gpio_num_t MOTOR_POWER_PIN = GPIO_NUM_3;
 
             const int32_t PAUSE_AFTER_OPEN = /*2 * 60 */15* 1000;
@@ -104,10 +107,14 @@ namespace SmartRomanCurtain
             QueueHandle_t _motorCommandQueue = nullptr;
             enum EnMotorState _motorState = EnMotorState::STOPPED;
             enum EnWorkMode _workMode = EnWorkMode::NORMAL;
+
             float _motorPosition = 0.0f;
             int32_t _baseCalibration = 0;
             int32_t _openCloseCounter = 0;
             std::unique_ptr<float> _ratio;
+
+            bool _motorOnOff = false;
+            uint32_t _targetPosition = 0;
 
             // Designed to wrap IRQ handler HallSensorIsrHandler
             static void IRAM_ATTR StaticHandleHallSensorIsr(void *arg);

@@ -9,10 +9,14 @@ namespace SmartRomanCurtain {
     YandexDialogController::YandexDialogController() {
         // TODO Auto-generated constructor stub
         _client = {};
+        _heartbeatTimer = nullptr;
     }
 
     YandexDialogController::~YandexDialogController() {
         // TODO Auto-generated destructor stub
+        if (_heartbeatTimer != nullptr) {
+            xTimerDelete(_heartbeatTimer, portMAX_DELAY);
+        }
     }
 
     // Designed to wrap task HandleMqttEvent
@@ -34,11 +38,16 @@ namespace SmartRomanCurtain {
                     ESP_LOGI(TAG.c_str(), "MQTT connected");
                     const std::string MQTT_COMMANDS_TOPIC = "$devices/" + _mqttUsername + "/commands";
                     esp_mqtt_client_subscribe(_client, MQTT_COMMANDS_TOPIC.c_str(), 0);
+                    StartHeartbeatTimer();
                 }
                 break;
 
-            case MQTT_EVENT_DISCONNECTED:
-                ESP_LOGI(TAG.c_str(), "MQTT disconnected");
+            case MQTT_EVENT_DISCONNECTED: {
+                    ESP_LOGI(TAG.c_str(), "MQTT disconnected");
+                    const std::string MQTT_COMMANDS_TOPIC = "$devices/" + _mqttUsername + "/commands";
+                    esp_mqtt_client_unsubscribe(_client, MQTT_COMMANDS_TOPIC.c_str());
+                    StopHeartbeatTimer();
+                }
                 break;
 
             case MQTT_EVENT_DATA: {
@@ -46,29 +55,94 @@ namespace SmartRomanCurtain {
                     ESP_LOGI(TAG.c_str(), "Topic: %.*s", event->topic_len, event->topic);
                     ESP_LOGI(TAG.c_str(), "Data: %.*s", event->data_len, event->data);
 
-                    if (strstr(event->data, "open") != NULL) {
-                        _changeMotorStateCallback("open");
-                        ESP_LOGI(TAG.c_str(), "Command: open curtain");
-
-                    } else if (strstr(event->data, "close") != NULL) {
-                        _changeMotorStateCallback("close");
-                        ESP_LOGI(TAG.c_str(), "Command: close curtain");
-                    } else {
-                        uint32_t value = std::stoi(std::string(event->data, event->data_len));
-                        ESP_LOGI(TAG.c_str(), "Value: %d", value);
-                        _changeMotorRangeCallback(value);
-                    }
-                    // Form JSON-response
-                    std::string response = R"({"status": ")" + std::string("DONE") + R"("})";
-
                     const std::string MQTT_EVENTS_TOPIC = "$devices/" + _mqttUsername + "/events";
-                    // Sending a response to the event topic
-                    esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
-                    ESP_LOGI(TAG.c_str(), "Sent state response: %s", response.c_str());
+                    std::string response = {};
+
+                    cJSON *root = cJSON_Parse(event->data);
+                    if (root != NULL) {
+                        cJSON *requestTypeJsonItem = cJSON_GetObjectItem(root, "request_type");
+                        cJSON *valueJsonItem = cJSON_GetObjectItem(root, "value");
+                        cJSON *requestIdJsonItem = cJSON_GetObjectItem(root, "request_id");
+                        std::string requestId = "";
+                        if (requestIdJsonItem != nullptr && cJSON_IsString(requestIdJsonItem)) {
+                            requestId = requestIdJsonItem->valuestring;
+                            ESP_LOGI(TAG.c_str(), "Request ID: %s", requestId.c_str());
+                        }
+
+                        if (requestTypeJsonItem != nullptr && cJSON_IsString(requestTypeJsonItem)) {
+                            std::string requestType = requestTypeJsonItem->valuestring;
+                            ESP_LOGI(TAG.c_str(), "Request type: %s", requestType.c_str());
+
+                            if (requestType == "on_off") {
+
+                                if (valueJsonItem != nullptr && cJSON_IsString(valueJsonItem)) {
+                                    std::string command = valueJsonItem->valuestring;
+                                    ESP_LOGI(TAG.c_str(), "On/Off command: %s", command.c_str());
+
+                                    if (command == "open" || command == "close") {
+                                        _changeMotorStateCallback(command);
+                                        response = R"({"status": "DONE", "request_id": ")" + requestId + R"("})";
+                                        esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
+                                    } else {
+                                        ESP_LOGE(TAG.c_str(), "Invalid on/off command: %s", command.c_str());
+                                        response = R"({"status": "ERROR", "error_message": "Invalid command"})";
+                                        esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
+                                    }
+                                } else {
+                                    ESP_LOGE(TAG.c_str(), "Invalid value for on_off request");
+                                    response = R"({"status": "ERROR", "error_message": "Invalid value"})";
+                                    esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
+                                }
+                            } else if (requestType == "range") {
+
+                                if (valueJsonItem != nullptr && cJSON_IsNumber(valueJsonItem)) {
+                                    uint32_t value = valueJsonItem->valueint;
+                                    ESP_LOGI(TAG.c_str(), "Range value: %d", value);
+                                    _changeMotorRangeCallback(value);
+                                    response = R"({"status": "DONE", "request_id": ")" + requestId + R"("})";
+                                    esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
+                                } else {
+                                    ESP_LOGE(TAG.c_str(), "Invalid value for range request");
+                                    response = R"({"status": "ERROR", "error_message": "Invalid value"})";
+                                    esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
+                                }
+                            } else if (requestType == "query") {
+
+                                auto motorOnOffAndRange = _getMotorOnOffAndRangeCallback();
+                                response = R"({"capabilities": [{)"
+                                    R"("type": "devices.capabilities.range",)"
+                                    R"("state": {)"
+                                        R"("instance": "open",)"
+                                        R"("value": )" + std::to_string(motorOnOffAndRange.second) + R"(})"
+                                    R"(}, {)"
+                                        R"("type": "devices.capabilities.on_off",)"
+                                        R"("state": {)"
+                                            R"("instance": "on",)"
+                                            R"("value": )" + (motorOnOffAndRange.first ? "true" : "false") + R"(})"
+                                    R"(}], "request_id": ")" + requestId + R"("})";
+                                esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
+                            } else {
+                                ESP_LOGE(TAG.c_str(), "Unknown request type: %s", requestType.c_str());
+                                response = R"({"status": "ERROR", "error_message": "Unknown request type"})";
+                                esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
+                            }
+                        } else {
+                            ESP_LOGE(TAG.c_str(), "Missing or invalid request_type field");
+                            response = R"({"status": "ERROR", "error_message": "Missing request_type"})";
+                            esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
+                        }
+
+                        cJSON_Delete(root);
+                    } else {
+                        ESP_LOGE(TAG.c_str(), "JSON parse failed for data: %s", event->data);
+                        response = R"({"status": "ERROR", "error_message": "Invalid JSON"})";
+                        esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(), response.c_str(), response.length(), 0, 0);
+                    }
                 }
                 break;
 
             case MQTT_EVENT_ERROR:
+                StopHeartbeatTimer();
                 ESP_LOGI(TAG.c_str(), "MQTT Error");
                 break;
 
@@ -105,6 +179,8 @@ namespace SmartRomanCurtain {
     // Designed to reset configure and stop
     void YandexDialogController::Deinitialize()
     {
+        StopHeartbeatTimer();
+
         if (_client != nullptr) {
             ESP_LOGI(TAG.c_str(), "Disconnecting MQTT client");
             esp_mqtt_client_disconnect(_client);
@@ -129,5 +205,80 @@ namespace SmartRomanCurtain {
     {
         _changeMotorRangeCallback = changeMotorRangeCallback;
     }
+
+    // Designed to set callback
+    void YandexDialogController::Set(const std::function<std::pair<bool, int32_t>()>& getMotorOnOffAndRangeCallback)
+    {
+        _getMotorOnOffAndRangeCallback = getMotorOnOffAndRangeCallback;
+    }
+
+    // Callback для таймера heartbeat
+    void YandexDialogController::StaticHeartbeatTimerCallback(TimerHandle_t xTimer)
+    {
+        YandexDialogController* self = static_cast<YandexDialogController*>(pvTimerGetTimerID(xTimer));
+        if (self) {
+            self->SendHeartbeat();
+        }
+    }
+
+    // Designed to send MQTT message with heartbeat info
+    void YandexDialogController::SendHeartbeat()
+    {
+        if (/*!_isConnected ||*/ _client == nullptr) {
+            ESP_LOGI(TAG.c_str(), "MQTT not connected, skipping heartbeat");
+            return;
+        }
+
+        // Form JSON for heartbeat
+        std::string heartbeatJson = R"({
+            "device_id": ")" + _mqttUsername + R"(",
+            "timestamp": )" + std::to_string(esp_timer_get_time() / 1000000) + R"(,
+            "type": "heartbeat"
+        })";
+
+        const std::string MQTT_EVENTS_TOPIC = "$devices/" + _mqttUsername + "/events";
+
+        int32_t msgId = esp_mqtt_client_publish(_client, MQTT_EVENTS_TOPIC.c_str(),
+                                           heartbeatJson.c_str(), heartbeatJson.length(),
+                                           0, 0);
+
+        if (msgId == -1) {
+            ESP_LOGE(TAG.c_str(), "Failed to publish heartbeat");
+        } else {
+            ESP_LOGI(TAG.c_str(), "Heartbeat sent: %s", heartbeatJson.c_str());
+        }
+    }
+
+    // Designed to start heartbeat timer
+    void YandexDialogController::StartHeartbeatTimer()
+    {
+        if (_heartbeatTimer == nullptr) {
+            _heartbeatTimer = xTimerCreate(
+                "HeartbeatTimer",
+                pdMS_TO_TICKS(5000),
+                pdTRUE,
+                this,
+                StaticHeartbeatTimerCallback
+            );
+        }
+
+        if (_heartbeatTimer != nullptr) {
+            if (xTimerStart(_heartbeatTimer, 0) != pdPASS) {
+                ESP_LOGE(TAG.c_str(), "Failed to start heartbeat timer");
+            } else {
+                ESP_LOGI(TAG.c_str(), "Heartbeat timer started (5s interval)");
+            }
+        }
+    }
+
+    // Designed to stop heartbeat timer
+    void YandexDialogController::StopHeartbeatTimer()
+    {
+        if (_heartbeatTimer != nullptr) {
+            xTimerStop(_heartbeatTimer, 0);
+            ESP_LOGI(TAG.c_str(), "Heartbeat timer stopped");
+        }
+    }
+
 
 } /* namespace SmartRomanCurtain */

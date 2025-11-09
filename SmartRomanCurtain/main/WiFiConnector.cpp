@@ -184,7 +184,7 @@ namespace SmartRomanCurtain {
             ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifiApConfig));
             ESP_ERROR_CHECK(esp_wifi_start());
 
-            int8_t power = 80; // 20 dBm
+            int8_t power = 60; // 20 dBm
             esp_wifi_set_max_tx_power(power);
 
             // Reset counter
@@ -200,6 +200,10 @@ namespace SmartRomanCurtain {
             }
             ESP_ERROR_CHECK(err);
         } else {
+
+            int8_t power = 60; // 20 dBm
+            esp_wifi_set_max_tx_power(power);
+
             // If in mode APSTA trying to connect to STA
             ESP_LOGI(TAG, "Retrying STA connection in APSTA mode...");
             esp_err_t err = esp_wifi_connect();
@@ -272,7 +276,7 @@ namespace SmartRomanCurtain {
         wifiStaConfig.sta.sort_method = WIFI_CONNECT_AP_BY_SIGNAL;
         wifiStaConfig.sta.threshold.rssi = WIFI_SCAN_RSSI_THRESHOLD;
         wifiStaConfig.sta.threshold.authmode = WIFI_AUTH_OPEN;
-        wifiStaConfig.sta.channel = 1;
+        wifiStaConfig.sta.channel = 0;
 
         if (strlen(_ssid) > 0 && strlen(_password) > 0) {
             strncpy((char *)wifiStaConfig.sta.ssid, _ssid, strlen(_ssid));
@@ -294,6 +298,9 @@ namespace SmartRomanCurtain {
         // Set DNS
         mdns_init();
         mdns_hostname_set("roman-curtain");
+
+        int8_t power = 60; // 20 dBm
+        esp_wifi_set_max_tx_power(power);
 
         esp_wifi_connect();
     }
