@@ -28,7 +28,7 @@ namespace SmartRomanCurtain
             // Designed to set NVS manager instance
             void Set(NvsMemoryManager* nvsMemoryManager);
 
-            // Designed to set sleep mode params
+            // Designed to set sleep mode parameters
             void SetSleepModeParams(const std::vector<StSleepModeParamas>& sleepModeParamsList);
 
             // Designed to read current time hour

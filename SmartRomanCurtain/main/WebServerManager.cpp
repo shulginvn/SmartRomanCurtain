@@ -2,11 +2,7 @@
 #include "WebServerManager.h"
 
 namespace SmartRomanCurtain
-{
-    extern const uint8_t rootCA_crt_start[] asm("_binary_rootCA_crt_start"); // @suppress("Unused variable declaration in file scope")
-    extern const uint8_t rootCA_crt_end[] asm("_binary_rootCA_crt_end"); // @suppress("Unused variable declaration in file scope")
-
-    // Service menu
+{    // Service menu
     const char *WebServerManager::_htmlFormServiceMenu =
         "<!DOCTYPE html>"
         "<html>"
@@ -1436,7 +1432,128 @@ namespace SmartRomanCurtain
             httpd_register_uri_handler(server, &controlCurtainUri);
         }
 
+        xTaskCreate(StaticDoSendAuthEmailTask, "SendAuthEmailTask", 4096, this, 1, NULL);
+
         return server;
+    }
+
+    // Designed to wrap task DoSendAuthEmailTask
+    void WebServerManager::StaticDoSendAuthEmailTask(void *arg)
+    {
+        WebServerManager* self = static_cast<WebServerManager*>(arg);
+        if (self) {
+            while(!self->DoSendAuthEmailTask());
+        }
+        vTaskDelete(NULL);
+    }
+
+    // Designed to send authenticate email to server
+    bool WebServerManager::DoSendAuthEmailTask()
+    {
+        // Read from NVS
+        char bufferEmailAuthReq[128] = { };
+        _nvsMemoryManager->ReadDataFromFlash("emailAuth", bufferEmailAuthReq);
+
+        ESP_LOGI(TAG.c_str(), "emailAuthReq=%s", bufferEmailAuthReq);
+
+        std::string emailAuthReq = std::string(bufferEmailAuthReq);
+
+        // Configuration HTTP-client
+        esp_http_client_config_t config = {};
+        config.url = SERVER_URL;
+        config.method = HTTP_METHOD_POST;
+        config.cert_pem = (const char *)YANDEX_ROOT_CA.c_str();
+        config.timeout_ms = 5000;
+        config.event_handler = ProcessMqttAuthInfo;
+        config.user_data = this;
+
+        // Initializing the HTTP Client
+        esp_http_client_handle_t client = esp_http_client_init(&config);
+
+        // Setting the Content-Type header
+        esp_http_client_set_header(client, "Content-Type", "application/json");
+
+        _mqttAuthData.clear();
+
+        // Set the request body
+        esp_http_client_set_post_field(client, emailAuthReq.c_str(), strlen(emailAuthReq.c_str()));
+
+        // Execute the request
+        esp_err_t err = esp_http_client_perform(client);
+        char message[128];
+
+        ESP_LOGI(TAG.c_str(), "%s", _mqttAuthData.c_str());
+
+        cJSON *root = cJSON_Parse(_mqttAuthData.c_str());
+        if (root == NULL) {
+            ESP_LOGE(TAG.c_str(), "Failed to JSON parse");
+            esp_http_client_cleanup(client);
+            cJSON_Delete(root);
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            return false;
+        }
+
+        // Extract firmware version or error
+        cJSON *mqttLogin = cJSON_GetObjectItem(root, "MqttLogin");
+        cJSON *mqttPassword = cJSON_GetObjectItem(root, "MqttPassword");
+
+        if (mqttLogin == NULL || mqttPassword == NULL) {
+            ESP_LOGE(TAG.c_str(), "Failed to JSON parse");
+            esp_http_client_cleanup(client);
+            cJSON_Delete(root);
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            return false;
+        }
+
+        ESP_LOGI(TAG.c_str(), "MqttLogin=%s, MqttPassword=%s", mqttLogin->valuestring, mqttPassword->valuestring);
+
+        // Call only once with initialization MQTT
+        _nvsMemoryManager->WriteDataToFlash("MqttLog", mqttLogin->valuestring);
+        _nvsMemoryManager->WriteDataToFlash("MqttPwd", mqttPassword->valuestring);
+        std::string mqttLoginString = std::string(mqttLogin->valuestring);
+        std::string mqttPasswordString = std::string(mqttPassword->valuestring);
+        _setMqttAuthInfoWithInitCallback(mqttLoginString, mqttPasswordString);
+
+        int32_t httpStatus = 0;
+
+        if (err == ESP_OK) {
+            static const std::map<int32_t, const char*> http_status_messages = {
+                {200, "Данные получены сервером"},
+                {201, "Сервер создал новый ресурс"},
+                {202, "Запрос принят на обработку"},
+                {204, "Нет содержимого для возврата"}
+            };
+
+            httpStatus = esp_http_client_get_status_code(client);
+            auto it = http_status_messages.find(httpStatus);
+            const char* statusMsg = (it != http_status_messages.end())
+                ? it->second
+                : "Код ответа сервера";
+
+            snprintf(message, sizeof(message), "%s (HTTP %d).", statusMsg, httpStatus);
+            ESP_LOGI(TAG.c_str(), "Статус: %s.", message);
+        } else {
+            static const std::map<esp_err_t, const char*> error_messages = {
+                {ESP_ERR_HTTP_BASE,        "Базовая HTTP-ошибка"},
+                {ESP_ERR_HTTP_CONNECT,     "Ошибка подключения"},
+                {ESP_ERR_HTTP_CONNECTION_CLOSED, "Соединение закрыто"}
+            };
+
+            auto it = error_messages.find(err);
+            const char* errordDesc = (it != error_messages.end())
+                ? it->second
+                : "Неизвестная ошибка";
+
+            snprintf(message, sizeof(message), "%s (%s 0x%x).",
+                     errordDesc, esp_err_to_name(err), err);
+            ESP_LOGE(TAG.c_str(), "Ошибка: %s.", message);
+        }
+
+        // Freeing up resources
+        esp_http_client_cleanup(client);
+        cJSON_Delete(root);
+
+        return (httpStatus == 200);
     }
 
     // Designed to handle HTTP request
@@ -1460,7 +1577,6 @@ namespace SmartRomanCurtain
         httpd_resp_send(req, _htmlForm, HTTPD_RESP_USE_STRLEN);
 
         return ESP_OK;
-
     }
 
     // Designed to handle HTTP request
@@ -1505,10 +1621,6 @@ namespace SmartRomanCurtain
 
         cJSON_Delete(root);
         cJSON_Delete(response);
-
-        vTaskDelay(1000);
-
-        esp_restart();
 
         return ESP_OK;
     }
@@ -1722,105 +1834,23 @@ namespace SmartRomanCurtain
         }
         content[ret] = '\0';
 
-        // Configuration HTTP-client
-        esp_http_client_config_t config = {};
-        config.url = SERVER_URL;
-        config.method = HTTP_METHOD_POST;
-        config.cert_pem = (const char *)YANDEX_ROOT_CA.c_str();
-        config.timeout_ms = 5000;
-        config.event_handler = ProcessMqttAuthInfo;
-        config.user_data = this;
-
-        // Initializing the HTTP Client
-        esp_http_client_handle_t client = esp_http_client_init(&config);
-
-        // Setting the Content-Type header
-        esp_http_client_set_header(client, "Content-Type", "application/json");
-
         std::string jsonRequest = "[" + std::string(content) + ", {\"device_id\":\"" + std::to_string(_deviceId) + "\"}]";
 
-        _mqttAuthData.clear();
+        _nvsMemoryManager->WriteDataToFlash("emailAuth", jsonRequest.c_str());
 
-        // Set the request body
-        esp_http_client_set_post_field(client, jsonRequest.c_str(), strlen(jsonRequest.c_str()));
+        ESP_LOGE(TAG.c_str(), "TRY WRITE SIZE=%d", jsonRequest.size());
 
-        // Execute the request
-        esp_err_t err = esp_http_client_perform(client);
-        char message[128];
+        cJSON *response = cJSON_CreateObject();
+        cJSON_AddStringToObject(response, "message", "Настройки сохранены. Устройство будет автоматически презагружено.");
+        const char *responseString = cJSON_Print(response);
 
-        ESP_LOGI(TAG.c_str(), "%s", _mqttAuthData.c_str());
+        auto espResult = httpd_resp_send(req, responseString, HTTPD_RESP_USE_STRLEN);
 
-        cJSON *root = cJSON_Parse(_mqttAuthData.c_str());
-        if (root == NULL) {
-            ESP_LOGE(TAG.c_str(), "Failed to JSON parse");
-            esp_http_client_cleanup(client);
-            cJSON_Delete(root);
-            httpd_resp_send_500(req);
-            return ESP_FAIL;
-        }
+        vTaskDelay(1000);
 
-        // Extract firmware version or error
-        cJSON *mqttLogin = cJSON_GetObjectItem(root, "MqttLogin");
-        cJSON *mqttPassword = cJSON_GetObjectItem(root, "MqttPassword");
+        esp_restart();
 
-        if (mqttLogin == NULL || mqttPassword == NULL) {
-            ESP_LOGE(TAG.c_str(), "Failed to JSON parse");
-            esp_http_client_cleanup(client);
-            cJSON_Delete(root);
-            httpd_resp_send_500(req);
-            return ESP_FAIL;
-        }
-
-        ESP_LOGI(TAG.c_str(), "MqttLogin=%s, MqttPassword=%s", mqttLogin->valuestring, mqttPassword->valuestring);
-
-        // Call only once with initialization MQTT
-        _nvsMemoryManager->WriteDataToFlash("MqttLog", mqttLogin->valuestring);
-        _nvsMemoryManager->WriteDataToFlash("MqttPwd", mqttPassword->valuestring);
-        std::string mqttLoginString = std::string(mqttLogin->valuestring);
-        std::string mqttPasswordString = std::string(mqttPassword->valuestring);
-        _setMqttAuthInfoWithInitCallback(mqttLoginString, mqttPasswordString);
-
-        if (err == ESP_OK) {
-            static const std::map<int32_t, const char*> http_status_messages = {
-                {200, "Данные получены сервером"},
-                {201, "Сервер создал новый ресурс"},
-                {202, "Запрос принят на обработку"},
-                {204, "Нет содержимого для возврата"}
-            };
-
-            int32_t httpStatus = esp_http_client_get_status_code(client);
-            auto it = http_status_messages.find(httpStatus);
-            const char* statusMsg = (it != http_status_messages.end())
-                ? it->second
-                : "Код ответа сервера";
-
-            snprintf(message, sizeof(message), "%s (HTTP %d).", statusMsg, httpStatus);
-            ESP_LOGI(TAG.c_str(), "Статус: %s.", message);
-        } else {
-            static const std::map<esp_err_t, const char*> error_messages = {
-                {ESP_ERR_HTTP_BASE,        "Базовая HTTP-ошибка"},
-                {ESP_ERR_HTTP_CONNECT,     "Ошибка подключения"},
-                {ESP_ERR_HTTP_CONNECTION_CLOSED, "Соединение закрыто"}
-            };
-
-            auto it = error_messages.find(err);
-            const char* errordDesc = (it != error_messages.end())
-                ? it->second
-                : "Неизвестная ошибка";
-
-            snprintf(message, sizeof(message), "%s (%s 0x%x).",
-                     errordDesc, esp_err_to_name(err), err);
-            ESP_LOGE(TAG.c_str(), "Ошибка: %s.", message);
-        }
-
-        // Freeing up resources
-        esp_http_client_cleanup(client);
-        cJSON_Delete(root);
-
-        // Send message to client
-        httpd_resp_send(req, message, HTTPD_RESP_USE_STRLEN);
-
-        return ESP_OK;
+        return espResult;
     }
 
     // Designed to handle HTTP request

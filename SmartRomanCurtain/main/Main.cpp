@@ -10,7 +10,7 @@
 
 namespace SmartRomanCurtain
 {
-    std::string CURRENT_FIRMWARE_VERSION = "1.02";
+    std::string CURRENT_FIRMWARE_VERSION = "1.03";
 
     WebServerManager _webServerManager;
     NvsMemoryManager _nvsMemoryManager;

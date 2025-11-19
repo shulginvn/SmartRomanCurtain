@@ -1,20 +1,16 @@
 #pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <algorithm>
 #include <functional>
 #include <map>
 #include <unordered_map>
+#include <string>
+#include <vector>
 
 #include "esp_http_server.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
-
-#include <string>
-#include <vector>
-#include <string.h>
 
 #include "DeepSleepNtp.h"
 #include "NvsMemoryManager.h"
@@ -177,6 +173,12 @@ namespace SmartRomanCurtain
 
             // Designed to handle HTTP request with wrap in static method
             static esp_err_t StaticControlCurtainHandler(httpd_req_t* req);
+
+            // Designed to wrap task DoSendAuthEmailTask
+            static void StaticDoSendAuthEmailTask(void *arg);
+
+            // Designed to send authenticate email to server
+            bool DoSendAuthEmailTask();
 
             // Designed for the compare firmware versions
             std::string CompareFirmwareVersions(const std::string& currentVersion, const std::string& serverVersion);
