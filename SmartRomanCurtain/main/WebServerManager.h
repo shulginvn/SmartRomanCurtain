@@ -72,6 +72,7 @@ namespace SmartRomanCurtain
 
             char _login[32] = {0};
             char _password[64] = {0};
+            char _readNvsBuffer[128] = {};
 
             NvsMemoryManager* _nvsMemoryManager;
             MotorController* _motorController;
@@ -179,6 +180,9 @@ namespace SmartRomanCurtain
 
             // Designed to send authenticate email to server
             bool DoSendAuthEmailTask();
+
+            // Designed for load stored settings
+            esp_err_t GetStoredSettingsHandler(httpd_req_t *req);
 
             // Designed for the compare firmware versions
             std::string CompareFirmwareVersions(const std::string& currentVersion, const std::string& serverVersion);

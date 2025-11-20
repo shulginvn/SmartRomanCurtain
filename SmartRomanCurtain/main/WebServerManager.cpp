@@ -992,15 +992,49 @@ namespace SmartRomanCurtain
         "        });"
         ""
         "        function loadSavedValues() {"
-        "            const savedSSID = localStorage.getItem('curtain_ssid');"
+        "            const savedSsid = localStorage.getItem('curtain_ssid');"
+        "            const savedPassword = localStorage.getItem('curtain_password');"
         "            const savedYandex = localStorage.getItem('curtain_yandex');"
-        "            "
-        "            if (savedSSID) document.getElementById('ssid').value = savedSSID;"
-        "            if (savedYandex) document.getElementById('yandexLogin').value = savedYandex;"
+        ""
+        "            if (savedSsid && savedYandex && savedPassword) {"
+        "               document.getElementById('ssid').value = savedSsid;"
+        "               document.getElementById('password').value = savedPassword;"
+        "               document.getElementById('yandexLogin').value = savedYandex;"
+        "            } else {"
+        "               loadFromBackend();"
+        "            }"
         "        }"
         ""
-        "        function saveToLocalStorage(ssid, yandexLogin) {"
+        "        function loadFromBackend() {"
+        "            fetch('/getStoredSettings', {"
+        "                method: 'POST',"
+        "                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },"
+        "                body: ``"
+        "            })"
+        "            .then(response => {"
+        "                if (!response.ok) {"
+        "                    throw new Error('Ошибка при загрузке настроек');"
+        "                }"
+        "                return response.json();"
+        "            })"
+        "            .then(data => {"
+        "                document.getElementById('ssid').value = data.ssid;"
+        "                document.getElementById('password').value = data.password;"
+        "                document.getElementById('yandexLogin').value = data.yandexLogin;"
+        "                saveToLocalStorage(data.ssid, data.password, data.yandexLogin);"
+        ""
+        "                showToast('Сохраненные настройки успешно загружены!', true);"
+        "                showMessage('Сохраненные настройки успешно загружены!', true);"
+        "            })"
+        "            .catch(error => {"
+        "                showToast('Не удалось загрузить сохраненные настройки', false);"
+        "                showMessage('Не удалось загрузить сохраненные настройки', false);"
+        "            });"
+        "        }"
+        ""
+        "        function saveToLocalStorage(ssid, password, yandexLogin) {"
         "            localStorage.setItem('curtain_ssid', ssid);"
+        "            localStorage.setItem('curtain_password', password);"
         "            localStorage.setItem('curtain_yandex', yandexLogin);"
         "        }"
         ""
@@ -1071,7 +1105,7 @@ namespace SmartRomanCurtain
         "                return response.text();"
         "            })"
         "            .then(data => {"
-        "                saveToLocalStorage(ssid, yandexLogin);"
+        "                saveToLocalStorage(ssid, password, yandexLogin);"
         "                showToast('Настройки успешно сохранены!', true);"
         "                showMessage('Настройки успешно сохранены!', true);"
         "            })"
@@ -1430,11 +1464,50 @@ namespace SmartRomanCurtain
                 .user_ctx = this
             };
             httpd_register_uri_handler(server, &controlCurtainUri);
+
+            httpd_uri_t getStoredSettings = {
+                .uri = "/getStoredSettings",
+                .method = HTTP_POST,
+                .handler = [](httpd_req_t *req) {
+                    return static_cast<WebServerManager*>(req->user_ctx)->GetStoredSettingsHandler(req);
+                },
+                .user_ctx = this
+            };
+            httpd_register_uri_handler(server, &getStoredSettings);
         }
 
         xTaskCreate(StaticDoSendAuthEmailTask, "SendAuthEmailTask", 4096, this, 1, NULL);
 
         return server;
+    }
+
+    // Designed for load stored settings
+    esp_err_t WebServerManager::GetStoredSettingsHandler(httpd_req_t *req)
+    {
+        _nvsMemoryManager->ReadDataFromFlash("login", _readNvsBuffer);
+        std::string savedSsid = std::string(_readNvsBuffer);
+        _nvsMemoryManager->ReadDataFromFlash("password", _readNvsBuffer);
+        std::string savedPassword = std::string(_readNvsBuffer);
+        _nvsMemoryManager->ReadDataFromFlash("emailAuth", _readNvsBuffer);
+        std::string savedYandex = std::string(_readNvsBuffer);
+
+        cJSON *parsed = cJSON_Parse(savedYandex.c_str());
+        cJSON *emailItem = cJSON_GetObjectItem(cJSON_GetArrayItem(parsed, 0), "email");
+
+        cJSON *root = cJSON_CreateObject();
+        cJSON_AddStringToObject(root, "ssid", savedSsid.c_str());
+        cJSON_AddStringToObject(root, "password", savedPassword.c_str());
+        cJSON_AddStringToObject(root, "yandexLogin", emailItem->valuestring);
+
+        char *json_str = cJSON_Print(root);
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, json_str, HTTPD_RESP_USE_STRLEN);
+
+        free(json_str);
+        cJSON_Delete(root);
+        cJSON_Delete(parsed);
+
+        return ESP_OK;
     }
 
     // Designed to wrap task DoSendAuthEmailTask
@@ -1453,8 +1526,6 @@ namespace SmartRomanCurtain
         // Read from NVS
         char bufferEmailAuthReq[128] = { };
         _nvsMemoryManager->ReadDataFromFlash("emailAuth", bufferEmailAuthReq);
-
-        ESP_LOGI(TAG.c_str(), "emailAuthReq=%s", bufferEmailAuthReq);
 
         std::string emailAuthReq = std::string(bufferEmailAuthReq);
 
@@ -1480,9 +1551,6 @@ namespace SmartRomanCurtain
 
         // Execute the request
         esp_err_t err = esp_http_client_perform(client);
-        char message[128];
-
-        ESP_LOGI(TAG.c_str(), "%s", _mqttAuthData.c_str());
 
         cJSON *root = cJSON_Parse(_mqttAuthData.c_str());
         if (root == NULL) {
@@ -1515,6 +1583,7 @@ namespace SmartRomanCurtain
         _setMqttAuthInfoWithInitCallback(mqttLoginString, mqttPasswordString);
 
         int32_t httpStatus = 0;
+        char message[128];
 
         if (err == ESP_OK) {
             static const std::map<int32_t, const char*> http_status_messages = {
